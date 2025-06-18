@@ -5,7 +5,10 @@
 #include "Character/AureBaseCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "AureGameplayTags.h"
+#include "AbilitySystem/AureAbilitySystemComponent.h"
 
+struct FAureGameplayTags;
 // Sets default values
 AAureBaseCharacter::AAureBaseCharacter()
 {
@@ -23,6 +26,31 @@ AAureBaseCharacter::AAureBaseCharacter()
 
 }
 
+FVector AAureBaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
+{
+	const FAureGameplayTags& GameplayTags = FAureGameplayTags::Get();
+	// 判断是否匹配武器插槽
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon) && IsValid(Weapon))
+	{
+		return Weapon->GetSocketLocation(WeaponTipSocketName);
+	}
+	// 判断是否匹配左手插槽
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_LeftHand))
+	{
+		return GetMesh()->GetSocketLocation(LeftHandSocketName);
+	}
+	// 判断是否匹配右手插槽
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_RightHand))
+	{
+		return GetMesh()->GetSocketLocation(RightHandSocketName);
+	}
+	// 匹配尾部插槽
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Tail))
+	{
+		return GetMesh()->GetSocketLocation(TailSocketName);
+	}
+	return FVector();
+}
 
 
 UAbilitySystemComponent* AAureBaseCharacter::GetAbilitySystemComponent() const
@@ -67,6 +95,22 @@ void AAureBaseCharacter::InitializeDefaultAttributes() const
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.0f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.0f);
 	ApplyEffectToSelf(DefaultVitalAttributes, 1.0f);
+}
+
+void AAureBaseCharacter::AddCharacterAbilities()
+{
+	// 获取当前对象的技能系统组件，并将其转换为UAureAbilitySystemComponent类型
+	UAureAbilitySystemComponent* AureAbilitySystemComponent = CastChecked<UAureAbilitySystemComponent>(
+		GetAbilitySystemComponent());
+	
+	// 检查当前对象是否具有权限执行此操作
+	if (!HasAuthority())
+	{
+	    return;
+	}
+	
+	// 为角色添加初始技能
+	AureAbilitySystemComponent->AddCharacterAbilities(StartupAbilities);
 }
 
 

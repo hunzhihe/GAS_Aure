@@ -3,6 +3,7 @@
 
 #include "AureAssetManager.h"
 
+#include "AbilitySystemGlobals.h"
 #include "AureGameplayTags.h"
 
 UAureAssetManager& UAureAssetManager::Get()
@@ -18,4 +19,7 @@ void UAureAssetManager::StartInitialLoading()
 	Super::StartInitialLoading();
 
 	FAureGameplayTags::InitializeNativeGameplayTags();
+
+	//获取目标数据的必须项
+	UAbilitySystemGlobals::Get().InitGlobalData();
 }

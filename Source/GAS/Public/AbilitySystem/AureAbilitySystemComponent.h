@@ -20,6 +20,14 @@ public:
 	void AbilityActorInfoSet();
 
 	FEffectAssetTags EffectAssetTags;
+
+
+	//添加角色技能
+	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
+
+	void AbilityInputTagPressed(const FGameplayTag& InputTag);
+	void AbilityInputTagHeld(const FGameplayTag& InputTag);
+	void AbilityInputTagReleased(const FGameplayTag& InputTag);
 protected:                      
 	//委托触发的回调函数
 	UFUNCTION(Client, Reliable)

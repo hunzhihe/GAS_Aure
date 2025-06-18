@@ -8,6 +8,7 @@
 #include "Interaction/CombatInterface.h"
 #include "AureBaseCharacter.generated.h"
 
+class UGameplayAbility;
 class UGameplayEffect;
 class UAbilitySystemComponent;
 class UAttributeSet;
@@ -22,7 +23,7 @@ public:
 	AAureBaseCharacter();
 	
 	/** Combat Interface */
-
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
 	
 	/** end Combat Interface */
 	
@@ -36,6 +37,19 @@ protected:
 
 	UPROPERTY(EditAnywhere,Category = "Weapon")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
+
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName WeaponTipSocketName;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName LeftHandSocketName;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName RightHandSocketName;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName TailSocketName;
 
 
 	UPROPERTY(EditAnywhere,Category = "AbilitySystem")
@@ -80,7 +94,12 @@ protected:
 	 * 此函数用于在对象创建时设置默认的属性值它通常用于确保所有子类都具有一组标准的、初始化的属性
 	 */
 	virtual void InitializeDefaultAttributes() const;
-public:	
+
+	void AddCharacterAbilities();
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
 	
 	

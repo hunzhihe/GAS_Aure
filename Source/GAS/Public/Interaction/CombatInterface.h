@@ -6,8 +6,9 @@
 #include "UObject/Interface.h"
 #include "CombatInterface.generated.h"
 
+struct FGameplayTag;
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, BlueprintType)
 class UCombatInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -24,4 +25,12 @@ class GAS_API ICombatInterface
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	int32 GetPlayerLevel();
+
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FVector GetCombatSocketLocation(const FGameplayTag& MontageTag);
+
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void UpdateFacingTarget(const FVector& Target);
 };

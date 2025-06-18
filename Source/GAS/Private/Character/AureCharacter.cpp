@@ -29,7 +29,11 @@ void AAureCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	//初始化ASC的ownerActor和AvatarActor
 	InitAbilityActorInfo();
+
+	//初始化角色技能
+	AddCharacterAbilities();
 }
 
 void AAureCharacter::OnRep_PlayerState()
