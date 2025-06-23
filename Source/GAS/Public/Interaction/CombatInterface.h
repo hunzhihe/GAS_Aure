@@ -27,10 +27,19 @@ public:
 	int32 GetPlayerLevel();
 
 
+	//获取战斗socket位置
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FVector GetCombatSocketLocation(const FGameplayTag& MontageTag);
 
 
+	//蓝图事件，更新目标朝向
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void UpdateFacingTarget(const FVector& Target);
+
+	//获取受击动画
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UAnimMontage* GetHitReactMontage();
+
+	//死亡函数，子类重写
+	virtual void Die() = 0;
 };

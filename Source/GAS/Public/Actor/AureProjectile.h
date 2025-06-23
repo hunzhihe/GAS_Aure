@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,16 +26,24 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
+	//放置伤害GE
+	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
+	FGameplayEffectSpecHandle DamageEffectParams;
+
 protected:
 	
 	virtual void BeginPlay() override;
 
 
 	UFUNCTION(BlueprintCallable)
+	//命中特效
 	virtual void OnHit();
+
+	//销毁
 	virtual void Destroyed() override;
 
 
+	// 碰撞体重叠事件
 	UFUNCTION()
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -43,8 +52,7 @@ protected:
 	//碰撞体
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USphereComponent> Sphere;
-
-	bool IsValidOverlap(AActor* OtherActor);
+	
 	bool bHit = false;
 
 	//存储循环音效的变量，后续用于删除
@@ -53,7 +61,8 @@ protected:
 
 private:
 
-    void PlayImpact();
+	
+    
 	
 	UPROPERTY(EditDefaultsOnly)
 	float LifeSpan = 15.f;
@@ -71,11 +80,3 @@ private:
 		TObjectPtr<USoundBase> LoopingSound;
 };
 
-inline void AAureProjectile::PlayImpact()
-{
-	// 播放粒子效果
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-
-	//播放音效
-	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-}

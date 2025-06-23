@@ -276,4 +276,7 @@ public:
 private:
 	// 设置效果属性 生成结构体的值
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
+	// 显示伤害浮点数
+	static void ShowFloatingText(const FEffectProperties& Props, const float Damage);
+
 };

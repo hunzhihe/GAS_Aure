@@ -3,10 +3,14 @@
 
 #include "Character/Enemy.h"
 
+#include "AureGameplayTags.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/AureAttributeSet.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GAS/GAS.h"
+#include "UI/Widget/AureUserWidget.h"
 
 AAureEnemy::AAureEnemy()
 {
@@ -16,6 +20,10 @@ AAureEnemy::AAureEnemy()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 	AttributeSet = CreateDefaultSubobject<UAureAttributeSet>(TEXT("AttributeSet"));
+
+	// 创建生命值条，并将其绑定到根节点
+	HealthBar = CreateDefaultSubobject<UWidgetComponent>("HealthBar");
+	HealthBar->SetupAttachment(GetRootComponent());
 
 
 	bUseControllerRotationPitch = false;
@@ -52,15 +60,76 @@ int32 AAureEnemy::GetPlayerLevel_Implementation()
 	return Level;
 }
 
+void AAureEnemy::Die()
+{
+	SetLifeSpan(LifeSpan);
+	Super::Die();
+}
+
+void AAureEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bHitReacting = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
+}
+
 void AAureEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	
+
+	UAuraAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+	
 
 	InitAbilityActorInfo();
+
+	if (UAureUserWidget* Widget = Cast<UAureUserWidget>(HealthBar->GetUserWidgetObject()))
+	{
+		Widget->SetWidgetController( this);
+	}
+	if(const UAureAttributeSet* AS = Cast<UAureAttributeSet>(AttributeSet))
+	{
+		//监听血量变化
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AS->GetHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AS->GetMaxHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+
+		// 监听HitReact标签
+		AbilitySystemComponent->RegisterGameplayTagEvent(FAureGameplayTags::Get().Effects_HitReact, EGameplayTagEventType::NewOrRemoved).AddUObject(
+				this,
+				&AAureEnemy::HitReactTagChanged
+			);
+
+		//初始化血量
+		OnHealthChanged.Broadcast(AS->GetHealth());
+		OnMaxHealthChanged.Broadcast(AS->GetMaxHealth());
+	}
+	
+	
 }
 
 void AAureEnemy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 	Cast<UAureAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+
+	//初始化属性
+	InitializeDefaultAttributes();
+
+	//打印生命值查看属性
+	//UE_LOG(LogTemp, Warning, TEXT("%s 的生命值为 %f"), *this->GetName(), Cast<UAureAttributeSet>(AttributeSet)->GetHealth());
+}
+
+void AAureEnemy::InitializeDefaultAttributes() const
+{
+	UAuraAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }

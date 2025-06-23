@@ -7,7 +7,10 @@
 #include "AureGameplayTags.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
+#include "Interaction/CombatInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/AurePlayerController.h"
 
 UAureAttributeSet::UAureAttributeSet()
 {
@@ -104,12 +107,46 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+		// UE_LOG(LogTemp, Warning,
+		// 	TEXT("%s 的生命值发生了修改，当前生命值：%f"),
+		// 	*Props.TargetAvatarActor->GetName(), GetHealth());
 	}
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
 	}
-	
+
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	{
+		const float LocalIncomingDamage = GetIncomingDamage();
+		SetIncomingDamage(0.f);
+		if (LocalIncomingDamage>0.f)
+		{
+			const float NewHealth = GetHealth() - LocalIncomingDamage;
+			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+
+			// 检查是否死亡
+			const bool bFatal = NewHealth <= 0.f;
+
+			//测试受击动画
+			if (!bFatal)
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			}
+			else
+			{
+				//确认死亡的话调用死亡函数
+				ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
+				if (CombatInterface)
+				{
+					CombatInterface->Die();
+				}
+			}
+		}
+		ShowFloatingText(Props, LocalIncomingDamage);
+	}
 }
 
 void UAureAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
@@ -248,5 +285,17 @@ void UAureAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 	    Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 	    Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
 	    Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
+	}
+}
+
+void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const float Damage)
+{
+	if (Props.SourceCharacter != Props.TargetCharacter )
+	{
+		if (AAurePlayerController* PC = Cast<AAurePlayerController>(
+			UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0)))
+		{
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+		}
 	}
 }

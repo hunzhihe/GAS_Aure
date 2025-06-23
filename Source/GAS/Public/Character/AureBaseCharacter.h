@@ -8,6 +8,7 @@
 #include "Interaction/CombatInterface.h"
 #include "AureBaseCharacter.generated.h"
 
+class UNiagaraSystem;
 class UGameplayAbility;
 class UGameplayEffect;
 class UAbilitySystemComponent;
@@ -21,15 +22,25 @@ class GAS_API AAureBaseCharacter : public ACharacter,public IAbilitySystemInterf
 public:
 	// Sets default values for this character's properties
 	AAureBaseCharacter();
-	
-	/** Combat Interface */
-	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
-	
-	/** end Combat Interface */
-	
+
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	
+	
+	/** Combat Interface */
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+	virtual void Die() override;
+	
+	/** end Combat Interface */
+
+    // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastHandleDeath();
+	
+	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -51,11 +62,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName TailSocketName;
 
+	UPROPERTY(EditAnywhere, Category="Combat")
+	TObjectPtr<UAnimMontage> HitReactMontage;
 
-	UPROPERTY(EditAnywhere,Category = "AbilitySystem")
+
+	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY(EditAnywhere,Category = "AttributeSet")
+	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 	/**
@@ -96,6 +110,35 @@ protected:
 	virtual void InitializeDefaultAttributes() const;
 
 	void AddCharacterAbilities();
+
+	/*角色死亡后溶解效果*/
+	// 触发溶解效果的函数
+	void Dissolve();
+	
+	// 启动角色溶解时间轴的函数
+	// 参数: DynamicMaterialInstance - 动态材质实例，用于应用溶解效果
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+	
+	// 启动武器溶解时间轴的函数
+	// 参数: DynamicMaterialInstance - 动态材质实例，用于应用溶解效果
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartWeaponDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterialInstance);
+	
+	// 角色溶解材质实例，可以在编辑器中设置，并在蓝图中读取
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
+	
+	// 武器溶解材质实例，可以在编辑器中设置，并在蓝图中读取
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
+	/*角色死亡后溶解效果*/
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	UNiagaraSystem* BloodEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	USoundBase* DeathSound;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")

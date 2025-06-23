@@ -43,7 +43,7 @@ private:
 	// 当能力激活时调用此函数来处理目标数据
 	virtual void Activate() override;
 	// UTargetDataUnderMouses 类中的 SendMouseCursorData 方法
-	// 该方法用于发送鼠标光标下的目标数据
+	// 该方法用于发送鼠标光标下的目标数据到服务端
 	void SendMouseCursorData();
 
 	// 当目标数据在客户端复制时调用此函数

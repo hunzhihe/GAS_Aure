@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AureGameplayTags.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
+#include "Components/CapsuleComponent.h"
 
 struct FAureGameplayTags;
 // Sets default values
@@ -52,6 +53,44 @@ FVector AAureBaseCharacter::GetCombatSocketLocation_Implementation(const FGamepl
 	return FVector();
 }
 
+UAnimMontage* AAureBaseCharacter::GetHitReactMontage_Implementation()
+{
+	return HitReactMontage;
+}
+
+void AAureBaseCharacter::Die()
+{
+	//当角色死亡时，将武器从角色身上移除
+	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	MulticastHandleDeath();
+}
+
+
+void AAureBaseCharacter::MulticastHandleDeath_Implementation()
+{
+	//开启武器物理效果
+	Weapon->SetSimulatePhysics(true);
+	//重力模拟
+	Weapon->SetEnableGravity( true);
+	//物理碰撞通道
+	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+
+
+
+	//开启角色物理效果
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetEnableGravity( true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	//添加静态碰撞通道
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Block);
+
+	//关闭角色碰撞体碰撞通道，避免其对武器和角色模拟物理效果产生影响
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
+	//角色死亡时，调用Dissolve方法
+	Dissolve();
+}
 
 UAbilitySystemComponent* AAureBaseCharacter::GetAbilitySystemComponent() const
 {
@@ -111,6 +150,31 @@ void AAureBaseCharacter::AddCharacterAbilities()
 	
 	// 为角色添加初始技能
 	AureAbilitySystemComponent->AddCharacterAbilities(StartupAbilities);
+}
+
+void AAureBaseCharacter::Dissolve()
+{
+	// 检查溶解材质实例是否有效
+	if (IsValid(DissolveMaterialInstance))
+	{
+	    // 创建动态材质实例
+	    UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+	    // 为网格设置材质
+	    GetMesh()->SetMaterial(0, DynamicMatInst);
+	    // 启动溶解时间轴
+	    StartDissolveTimeline(DynamicMatInst);
+	}
+	
+	// 检查武器溶解材质实例是否有效
+	if (IsValid(WeaponDissolveMaterialInstance))
+	{
+	    // 创建动态材质实例
+	    UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstance, this);
+	    // 为武器设置材质
+	    Weapon->SetMaterial(0, DynamicMatInst);
+	    // 启动武器溶解时间轴
+	    StartWeaponDissolveTimeline(DynamicMatInst);
+	}
 }
 
 

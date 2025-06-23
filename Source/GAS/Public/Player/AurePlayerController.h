@@ -8,6 +8,7 @@
 #include "Input/InputConfig.h"
 #include "AurePlayerController.generated.h"
 
+class UDamageTextComponent;
 class USplineComponent;
 class UAureAbilitySystemComponent;
 struct FInputActionValue;
@@ -37,6 +38,9 @@ class GAS_API AAurePlayerController : public APlayerController
 public:
 	AAurePlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
+
+	UFUNCTION(Client, Reliable)
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter);
 
 protected:
 	virtual void BeginPlay() override;
@@ -120,5 +124,10 @@ private:
 
 	void AutoRun();
 
+    /*伤害数字显示*/
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
+	
+	/*伤害数字显示*/
 	
 };

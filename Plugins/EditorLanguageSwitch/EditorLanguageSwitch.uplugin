@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "EditorLanguageSwitch",
+	"Description": "编辑器中英文切换",
+	"Category": "Other",
+	"CreatedBy": "HunZhiHe",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EngineVersion": "5.5.0",
+	"CanContainContent": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "EditorLanguageSwitch",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

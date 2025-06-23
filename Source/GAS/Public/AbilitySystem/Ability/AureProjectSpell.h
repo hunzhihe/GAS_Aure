@@ -43,4 +43,8 @@ void SpawnProjectile(const FVector& ProjectileTargetLocation,
 	//火球类
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AAureProjectile> ProjectileClass;
+
+	//伤害效果类
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };

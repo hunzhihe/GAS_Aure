@@ -3,6 +3,9 @@
 
 #include "Actor/AureProjectile.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GAS/GAS.h"
@@ -42,7 +45,6 @@ ProjectileMovement->ProjectileGravityScale = 0.f;
 
 }
 
-// Called when the game starts or when spawned
 void AAureProjectile::BeginPlay()
 {
 Super::BeginPlay();
@@ -65,14 +67,36 @@ Sphere->OnComponentBeginOverlap.AddDynamic(
 
 void AAureProjectile::OnHit()
 {
+	// 在当前演员的位置播放撞击声音
+	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	// 在当前演员的位置生成撞击特效
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	
+	// 如果存在循环声音组件，则停止并销毁该组件
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
+	}
+	
+	// 设置撞击标志为真
+	bHit = true;
 }
 
 void AAureProjectile::Destroyed()
 {
+	//销毁循环音效
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
+	}
+	// 如果没有命中目标且没有权限，则播放撞击声音
 	if (!bHit && !HasAuthority())
 	{
-		PlayImpact();
+	   OnHit();
 	}
+	
 	Super::Destroyed();
 }
 
@@ -80,20 +104,24 @@ void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 
-	PlayImpact();
+	if (!bHit) OnHit();
 
 	//重叠后销毁
 	if (HasAuthority())
 	{
+		// 对目标应用伤害
+		if (UAbilitySystemComponent* TargetASC  = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
+		{
+			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectParams.Data.Get());
+		}
+
+		
 		Destroy();
 	}
 	else
 	{
 		bHit = true;
 	}
-
-
-	
 }
 
 

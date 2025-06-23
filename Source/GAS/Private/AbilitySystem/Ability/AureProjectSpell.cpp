@@ -3,6 +3,9 @@
 
 #include "AbilitySystem/Ability/AureProjectSpell.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "AureGameplayTags.h"
 #include "Actor/AureProjectile.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -16,7 +19,7 @@ void UAureProjectSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	//UKismetSystemLibrary::PrintString(this, TEXT("Activate Ability"), true, true, FColor::Red, 5.f);
 }
 
-// 函数注释：发射 projectile（投射物）
+// 生成发射 projectile（投射物）
 // 参数:
 // - ProjectileTargetLocation: 投射物的目标位置
 // - SocketTag: 用于标识投射物发射点的标签
@@ -58,5 +61,22 @@ void UAureProjectSpell::SpawnProjectile(const FVector& ProjectileTargetLocation,
 	
     // 完成投射物的生成
 	Projectile->FinishSpawning(SpawnTransform);
-}
 
+    // 获取拥有者角色的Ability System Component，以便后续使用
+    const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningActorFromActorInfo());
+
+    // 创建一个游戏效果规范句柄，用于描述即将应用的游戏效果
+	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(),SourceASC->MakeEffectContext());
+
+	//获取标签单例
+	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+	//根据等级获取技能伤害
+	const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("火球术伤害：%f"), ScaledDamage));
+	
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage,ScaledDamage);
+
+   // 将创建的效果规范句柄赋值给Projectile的DamageEffectParams属性
+    Projectile->DamageEffectParams = SpecHandle;
+
+}

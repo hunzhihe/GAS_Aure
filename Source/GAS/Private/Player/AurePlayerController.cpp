@@ -12,8 +12,10 @@
 #include "NavigationSystem.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "Components/SplineComponent.h"
+#include "GameFramework/Character.h"
 #include "Input/AureEnhancedInputComponent.h"
 #include "Interaction/HighlightInterface.h"
+#include "UI/Widget/DamageTextComponent.h"
 
 class UNavigationPath;
 
@@ -303,4 +305,24 @@ void AAurePlayerController::AutoRun()
 	        bAutoRunning = false;
 	    }
 	}
+}
+
+void AAurePlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+{
+	// 检查目标角色是否有效，并且伤害文本组件类是否已指定
+	if(IsValid(TargetCharacter) && DamageTextComponentClass)
+	{
+	    // 创建伤害文本组件实例
+	    UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+	    // 注册组件，使其在世界中可见
+	    DamageText->RegisterComponent(); 
+	    // 将伤害文本附加到目标角色的根组件上，保持相对位置
+	    DamageText->AttachToComponent(
+	    	TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform); 
+	    // 从角色组件上分离伤害文本组件，保持世界位置
+	    DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform); 
+	    // 设置伤害文本内容
+	    DamageText->SetDamageText(DamageAmount); 
+	}
+	
 }
