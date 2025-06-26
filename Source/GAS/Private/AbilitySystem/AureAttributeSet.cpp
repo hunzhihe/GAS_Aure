@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AureGameplayTags.h"
 #include "GameplayEffectExtension.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -128,11 +129,12 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			// 检查是否死亡
 			const bool bFatal = NewHealth <= 0.f;
 
-			//测试受击动画
+			//受击动画
 			if (!bFatal)
 			{
 				FGameplayTagContainer TagContainer;
 				TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->CancelAbilities(&TagContainer);
 				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 			}
 			else
@@ -145,7 +147,11 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				}
 			}
 		}
-		ShowFloatingText(Props, LocalIncomingDamage);
+		//获取格挡和暴击
+		const bool IsBlockedHit = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+		const bool IsCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+		
+		ShowFloatingText(Props, LocalIncomingDamage, IsBlockedHit, IsCriticalHit);
 	}
 }
 
@@ -288,14 +294,20 @@ void UAureAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 	}
 }
 
-void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const float Damage)
+void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const float Damage, bool IsBlockedHit, bool IsCriticalHit)
 {
 	if (Props.SourceCharacter != Props.TargetCharacter )
 	{
 		if (AAurePlayerController* PC = Cast<AAurePlayerController>(
-			UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0)))
+			Props.SourceCharacter->Controller))
 		{
-			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, IsBlockedHit, IsCriticalHit);
 		}
+		//从目标身上获取PC并显示伤害数字
+		if(AAurePlayerController* PC = Cast<AAurePlayerController>(Props.TargetCharacter->Controller))
+		{
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, IsBlockedHit, IsCriticalHit); //调用显示伤害数字
+		}
+		
 	}
 }

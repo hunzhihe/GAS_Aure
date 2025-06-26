@@ -18,5 +18,5 @@ public:
 
 	//蓝图事件 设置伤害文字
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void SetDamageText(float Damage); 
+	void SetDamageText(float Damage,bool IsBlockedHit, bool IsCriticalHit); 
 };

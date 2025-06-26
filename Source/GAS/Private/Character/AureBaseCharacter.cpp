@@ -65,6 +65,16 @@ void AAureBaseCharacter::Die()
 	MulticastHandleDeath();
 }
 
+bool AAureBaseCharacter::IsDead_Implementation() const
+{
+	return bDead;
+}
+
+AActor* AAureBaseCharacter::GetAvatar_Implementation()
+{
+	return this;
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 {

@@ -32,7 +32,8 @@ public:
 	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
 	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
 	virtual void Die() override;
-	
+	virtual bool IsDead_Implementation() const override;
+	virtual AActor* GetAvatar_Implementation() override;
 	/** end Combat Interface */
 
     // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
@@ -66,6 +67,8 @@ protected:
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
 
+	bool bDead = false;
+	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	

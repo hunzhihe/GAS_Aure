@@ -307,7 +307,7 @@ void AAurePlayerController::AutoRun()
 	}
 }
 
-void AAurePlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+void AAurePlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter,bool IsBlockedHit, bool IsCriticalHit)
 {
 	// 检查目标角色是否有效，并且伤害文本组件类是否已指定
 	if(IsValid(TargetCharacter) && DamageTextComponentClass)
@@ -322,7 +322,7 @@ void AAurePlayerController::ShowDamageNumber_Implementation(float DamageAmount, 
 	    // 从角色组件上分离伤害文本组件，保持世界位置
 	    DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform); 
 	    // 设置伤害文本内容
-	    DamageText->SetDamageText(DamageAmount); 
+	    DamageText->SetDamageText(DamageAmount, IsBlockedHit, IsCriticalHit); 
 	}
 	
 }

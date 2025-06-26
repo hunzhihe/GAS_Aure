@@ -65,16 +65,40 @@ void UAureProjectSpell::SpawnProjectile(const FVector& ProjectileTargetLocation,
     // 获取拥有者角色的Ability System Component，以便后续使用
     const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningActorFromActorInfo());
 
+	// 创建一个游戏效果上下文句柄，用于下面创建效果规范句柄FGameplayEffectSpecHandle
+	FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+	     /*填充上下文句柄*/
+	//设置技能
+	EffectContextHandle.SetAbility(this);
+	//设置源
+	EffectContextHandle.AddSourceObject(Projectile);
+	//添加Actor列表
+	TArray<TWeakObjectPtr<AActor>> Actors;
+	Actors.Add(Projectile);
+	EffectContextHandle.AddActors(Actors);
+	//添加命中结果
+	FHitResult HitResult;
+	HitResult.Location = ProjectileTargetLocation;
+	EffectContextHandle.AddHitResult(HitResult);
+	//添加技能触发位置
+	EffectContextHandle.AddOrigin(ProjectileTargetLocation);
+	      /*填充上下文句柄*/
+	
     // 创建一个游戏效果规范句柄，用于描述即将应用的游戏效果
-	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(),SourceASC->MakeEffectContext());
+	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(),EffectContextHandle);
 
 	//获取标签单例
 	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
-	//根据等级获取技能伤害
-	const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
-	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("火球术伤害：%f"), ScaledDamage));
+
+	for(auto& Pair : DamageTypes)
+	{
+		//根据等级获取技能伤害
+		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("火球术伤害：%f"), ScaledDamage));
 	
-	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage,ScaledDamage);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+	}
+	
 
    // 将创建的效果规范句柄赋值给Projectile的DamageEffectParams属性
     Projectile->DamageEffectParams = SpecHandle;

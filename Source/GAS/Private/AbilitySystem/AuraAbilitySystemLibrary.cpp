@@ -3,9 +3,12 @@
 
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 
+#include "AureAbilityTypes.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/Data/CharacterClassInfo.h"
+#include "Engine/OverlapResult.h"
 #include "Game/AureGameModeBase.h"
+#include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AurePlayerState.h"
 #include "UI/HUD/AureHUD.h"
@@ -129,25 +132,108 @@ UCharacterClassInfo* UAuraAbilitySystemLibrary::GetCharacterClassInfo(const UObj
 
 }
 
-void UAuraAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC
-	)
+void UAuraAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC,
+	ECharacterClass CharacterClass)
 {
-	//获取到当前关卡的GameMode实例
-	const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
-	if(GameMode == nullptr) return;
+	// 获取角色类信息
+	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
+	// 如果角色类信息为空，则不执行后续操作
+	if (CharacterClassInfo == nullptr) return;
 
-	const AActor* AvatarActor = ASC->GetAvatarActor();
 
-	//从实例获取到关卡角色的配置
-	UCharacterClassInfo* CharacterClassInfo = GameMode->CharacterClassInfo;
-
+	//从战斗接口获取到角色的等级
+	ICombatInterface* CombatInterface = Cast<ICombatInterface>(ASC->GetAvatarActor());
+	int32 CharacterLevel = 1;
+	if(CombatInterface)
+	{
+		CharacterLevel = ICombatInterface::Execute_GetPlayerLevel(ASC->GetAvatarActor());
+	}
+	
 	//遍历角色拥有的技能数组
 	for(const TSubclassOf<UGameplayAbility> AbilityClass : CharacterClassInfo->CommonAbilities)
 	{
 		//创建技能实例
-		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1); 
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, CharacterLevel); 
 
 		//只应用不激活
 		ASC->GiveAbility(AbilitySpec); 
+	}
+
+	// 获取指定角色类的默认信息
+	const FCharacterClassDefaultInfo& DefaultInfo = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
+	
+	// 遍历该角色类在初始化时应具备的技能
+	for (TSubclassOf<UGameplayAbility> AbilityClass : DefaultInfo.StartupAbilities)
+	{
+	    // 检查能力系统组件的化身演员是否实现了战斗接口
+	    if (ASC->GetAvatarActor()->Implements<UCombatInterface>())
+	    {
+	        // 创建技能规格，包括技能类和玩家等级
+	        FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, CharacterLevel);
+	        
+	        // 给能力系统组件赋予该技能,只应用不激活
+	        ASC->GiveAbility(AbilitySpec);
+	    }
+	}
+	
+}
+
+bool UAuraAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureGameplayEffectContext =
+		static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return AureGameplayEffectContext->IsBlockHit();
+	}
+	return false;
+}
+
+bool UAuraAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureGameplayEffectContext =
+		static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return AureGameplayEffectContext->IsCriticalHit();
+	}
+	return false;
+}
+
+void UAuraAbilitySystemLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit)
+{
+	FAureGameplayEffectContext* AureGameplayEffectContext =
+		static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get());
+	AureGameplayEffectContext->SetBlockHit(bInIsBlockedHit);
+}
+
+void UAuraAbilitySystemLibrary::SetIsCriticalHit(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsCriticalHit)
+{
+	FAureGameplayEffectContext* AureGameplayEffectContext =
+		static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get());
+	AureGameplayEffectContext->SetCriticalHit(bInIsCriticalHit);
+}
+
+void UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(const UObject* WorldContextObject,
+	TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius,
+	const FVector& SphereOrigin)
+{
+	FCollisionQueryParams SphereParams; //创建一个碰撞查询的配置
+	SphereParams.AddIgnoredActors(ActorsToIgnore); //添加忽略的Actor
+	
+	TArray<FOverlapResult> Overlaps; //创建存储检索到的与碰撞体产生碰撞的Actor
+	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull)) //获取当前所处的场景，如果获取失败，将打印并返回Null
+	{
+		//获取到所有与此球体碰撞的动态物体
+		World->OverlapMultiByObjectType(Overlaps, SphereOrigin, FQuat::Identity, FCollisionObjectQueryParams(FCollisionObjectQueryParams::InitType::AllDynamicObjects), FCollisionShape::MakeSphere(Radius), SphereParams);
+		for(FOverlapResult& Overlap : Overlaps) //遍历所有获取到的动态Actor
+		{
+			//判断当前Actor是否包含战斗接口   Overlap.GetActor() 从碰撞检测结果中获取到碰撞的Actor
+			const bool ImplementsCombatInterface =  Overlap.GetActor()->Implements<UCombatInterface>();
+			//判断当前Actor是否存活，如果不包含战斗接口，将不会判断存活（放置的火堆也属于动态Actor，这样保证不会报错）
+			if(ImplementsCombatInterface && !ICombatInterface::Execute_IsDead(Overlap.GetActor())) 
+			{
+				OutOverlappingActors.AddUnique(Overlap.GetActor()); //将Actor添加到返回数组，AddUnique 只有在此Actor未被添加时，才可以添加到数组
+			}
+		}
 	}
 }

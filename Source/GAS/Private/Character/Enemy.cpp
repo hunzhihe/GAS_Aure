@@ -7,6 +7,9 @@
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/AureAttributeSet.h"
+#include "AI/AureAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GAS/GAS.h"
@@ -43,6 +46,28 @@ AAureEnemy::AAureEnemy()
 	
 }
 
+void AAureEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (!HasAuthority())
+	{
+		return;
+	}
+	// 将控制器转换为AAureAIController类型
+	AureAIController = Cast<AAureAIController>(NewController);
+	
+	// 初始化AI控制器的黑板组件
+	AureAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+	
+	// 运行行为树
+	AureAIController->RunBehaviorTree(BehaviorTree);
+
+	//设置黑板键的值
+	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), false);
+	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("RangedAttacker"), CharacterClass != ECharacterClass::Warrior);
+}
+
 void AAureEnemy::HighlightActor_Implementation()
 {
 	GetMesh()->SetRenderCustomDepth(true);
@@ -66,10 +91,26 @@ void AAureEnemy::Die()
 	Super::Die();
 }
 
+AActor* AAureEnemy::GetCombatTarget_Implementation() const
+{
+	return CombatTarget;
+}
+
+void AAureEnemy::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+	CombatTarget = InCombatTarget;
+}
+
 void AAureEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	bHitReacting = NewCount > 0;
 	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
+
+	if (AureAIController && AureAIController->GetBlackboardComponent())
+	{
+		//设置黑板键的值
+		AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), bHitReacting);
+	}
 }
 
 void AAureEnemy::BeginPlay()
@@ -77,8 +118,8 @@ void AAureEnemy::BeginPlay()
 	Super::BeginPlay();
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	
-
-	UAuraAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+	//给敌人添加起始技能
+	UAuraAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent, CharacterClass);
 	
 
 	InitAbilityActorInfo();

@@ -103,6 +103,9 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	//获取挂载此类的GE实例
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+	//获取GE上下文句柄
+	FGameplayEffectContextHandle EffectContext = Spec.GetContext();
+	
 	
 
 	//设置评估参数
@@ -114,16 +117,55 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	/***通用内容****/
 
 
+	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+	//存储抗性标签和属性快照对应的Map
+	TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition> TagsToCaptureDefs;
+	//添加标签和属性快照
+	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Fire, DamageStatics().FireResistanceDef);
+	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Lightning, DamageStatics().LightningResistanceDef);
+	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Arcane, DamageStatics().ArcaneResistanceDef);
+	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Physical, DamageStatics().PhysicalResistanceDef);
+	
 	//伤害
-	float Damage = Spec.GetSetByCallerMagnitude(FAureGameplayTags::Get().Damage);
+	float Damage = 0;
+
+
+	//---------伤害类型和抗性-------//
+	for (const TTuple<FGameplayTag, FGameplayTag>& Pair :GameplayTags.DamageTypesToResistances )
+	{
+		const FGameplayTag& DamageType = Pair.Key;
+		const FGameplayTag& ResistanceTag = Pair.Value;
+		checkf(TagsToCaptureDefs.Contains(ResistanceTag), TEXT("在ExecCalc_Damage中，无法获取到Tag[%s]对应的属性快照"), *ResistanceTag.ToString());
+
+		//获取抗性标签对应的属性快照
+		const FGameplayEffectAttributeCaptureDefinition& CaptureDef = TagsToCaptureDefs[ResistanceTag];
+
+		//获取属性值
+		float Resistance = 0.f;
+		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
+		Resistance = FMath::Clamp(Resistance, 0.f, 100.f);
+		//通过Tag获取对应伤害值
+		float DamageTypeValue = Spec.GetSetByCallerMagnitude(DamageType);
+		//减去抗性
+		DamageTypeValue *= (100.f - Resistance) / 100.f;
+		//将每种属性伤害值合并进行后续计算
+		Damage += DamageTypeValue;
+	}
+
+	
 
 	//------- 格挡 --------//
 	//获取格挡率，如果格挡触发，则受伤害减半
 	float TargetBlockChance = 0.f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().BlockChanceDef, EvaluationParameters, TargetBlockChance);
-	TargetBlockChance = FMath::Clamp(TargetBlockChance, 0.f, 90);
+	TargetBlockChance = FMath::Clamp(TargetBlockChance, 0, 90);
+
+	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
+
+	UAuraAbilitySystemLibrary::SetIsBlockedHit(EffectContext, bBlocked);
+	
 	//格挡触发
-	if (FMath::RandRange(0.f, 100.f) < TargetBlockChance) Damage /= 2.f;
+	if (bBlocked) Damage /= 2.f;
 	//------- 格挡 --------//
 	
 	
@@ -183,11 +225,19 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	//影响后的暴击几率
 	const float EffectiveCriticalHitChance = CriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
-   
+
+	UAuraAbilitySystemLibrary::SetIsCriticalHit(EffectContext, bCriticalHit);
+	
 	//触发暴击 伤害乘以暴击伤害率
 	if(bCriticalHit) Damage = Damage * 2.f + CriticalHitDamage;
 	//---------暴击和暴击伤害-------//
+	
 
+
+	
+	
+	
+	
 	
 
 	//输出计算结果

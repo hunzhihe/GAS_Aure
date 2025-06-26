@@ -40,6 +40,15 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UAnimMontage* GetHitReactMontage();
 
+	//获取当前角色是否死亡
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool IsDead() const; 
+
+	//获取角色的Avatar
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AActor* GetAvatar();
+	
+
 	//死亡函数，子类重写
 	virtual void Die() = 0;
 };
