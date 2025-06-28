@@ -3,7 +3,9 @@
 
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AureAbilityTypes.h"
+#include "AureGameplayTags.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "Engine/OverlapResult.h"
@@ -224,7 +226,9 @@ void UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(const UObject* WorldC
 	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull)) //获取当前所处的场景，如果获取失败，将打印并返回Null
 	{
 		//获取到所有与此球体碰撞的动态物体
-		World->OverlapMultiByObjectType(Overlaps, SphereOrigin, FQuat::Identity, FCollisionObjectQueryParams(FCollisionObjectQueryParams::InitType::AllDynamicObjects), FCollisionShape::MakeSphere(Radius), SphereParams);
+		World->OverlapMultiByObjectType(Overlaps, SphereOrigin, FQuat::Identity,
+			FCollisionObjectQueryParams(FCollisionObjectQueryParams::InitType::AllDynamicObjects),
+			FCollisionShape::MakeSphere(Radius), SphereParams);
 		for(FOverlapResult& Overlap : Overlaps) //遍历所有获取到的动态Actor
 		{
 			//判断当前Actor是否包含战斗接口   Overlap.GetActor() 从碰撞检测结果中获取到碰撞的Actor
@@ -236,4 +240,127 @@ void UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(const UObject* WorldC
 			}
 		}
 	}
+}
+
+bool UAuraAbilitySystemLibrary::IsNotFriend(AActor* FirstActor, AActor* SecondActor)
+{
+	// 判断两个指定的Actor是否都不是朋友
+	// 此函数通过检查两个Actor是否都标记为"Player"或"Enemy"来确定它们是否为朋友
+	// 如果两个Actor都是玩家或都是敌人，则它们被视为朋友，函数返回false
+	// 如果它们不是朋友关系，则函数返回true
+	const bool bBothArePlayers = FirstActor->ActorHasTag(FName("Player")) && SecondActor->ActorHasTag(FName("Player"));
+	const bool bBothAreEnemies = FirstActor->ActorHasTag(FName("Enemy")) && SecondActor->ActorHasTag(FName("Enemy"));
+	const bool bFriends = bBothArePlayers || bBothAreEnemies;
+	return !bFriends;
+}
+
+FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams)
+{
+	// 获取游戏玩法标签的引用，用于后续可能的标签操作
+	const FAureGameplayTags& GameplayTags = FAureGameplayTags::Get();
+	
+	// 获取伤害效果来源的演员对象，这是施加伤害效果的实体
+	const AActor* SourceAvatarActor = DamageEffectParams.SourceAbilitySystemComponent->GetAvatarActor();
+		
+	// 创建一个游戏效果上下文句柄，用于描述伤害效果的来源和环境信息
+	FGameplayEffectContextHandle EffectContexthandle = DamageEffectParams.SourceAbilitySystemComponent->MakeEffectContext();
+	
+	// 将来源演员对象添加到效果上下文中，以便在应用伤害效果时考虑来源的信息
+	EffectContexthandle.AddSourceObject(SourceAvatarActor);
+		
+	// 创建一个游戏效果规范句柄，用于具体化伤害效果的配置，包括效果类、能力等级和上下文信息
+	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(DamageEffectParams.DamageGameplayEffectClass, DamageEffectParams.AbilityLevel, EffectContexthandle);
+
+	//通过标签设置GE使用的配置
+	for(auto& Pair : DamageEffectParams.DamageTypes)
+	{
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, Pair.Value);
+	}
+	// 通过蓝图库函数，根据伤害类型和基础伤害值设置效果规范的属性
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Debuff_Chance, DamageEffectParams.DebuffChance);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageEffectParams.DebuffDamageType, DamageEffectParams.DebuffDamage);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Debuff_Duration, DamageEffectParams.DebuffDuration);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Debuff_Frequency, DamageEffectParams.DebuffFrequency);
+	
+	// 应用配置好的伤害效果到目标的能力系统组件上
+	DamageEffectParams.TargetAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	
+	// 返回创建的效果上下文句柄，可能用于后续的跟踪或处理
+	return EffectContexthandle;
+}
+
+bool UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AureEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 检查转换后的AuraEffectContext是否表示一个成功的DeBuff效果
+	    return AureEffectContext->IsSuccessfulDeBuff();
+	}
+	// 如果转换失败，则默认返回false
+	return false;
+}
+
+float UAuraAbilitySystemLibrary::GetDeBuffDamage(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 返回AuraEffectContext中设置的DeBuff伤害值
+	    return AureEffectContext->GetDeBuffDamage();
+	}
+	return 0.f;
+}
+
+float UAuraAbilitySystemLibrary::GetDeBuffDuration(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 返回AuraEffectContext中设置的DeBuff持续时间
+	    return AureEffectContext->GetDeBuffDuration();
+	}
+	return 0.f;
+}
+
+float UAuraAbilitySystemLibrary::GetDeBuffFrequency(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 返回AuraEffectContext中设置的DeBuff频率
+	    return AureEffectContext->GetDeBuffFrequency();
+	}
+	return 0.f;
+}
+
+FGameplayTag UAuraAbilitySystemLibrary::GetDeBuffDamageType(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FAureGameplayEffectContext* AureEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		//如果当前存在设置了伤害类型
+		if (AureEffectContext->GetDebuffDamageType().IsValid())
+		{
+			return *AureEffectContext->GetDebuffDamageType();
+		}
+	}
+	return FGameplayTag();
+}
+
+void UAuraAbilitySystemLibrary::SetIsSuccessfulDeBuff(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsSuccessfulDeBuff)
+{
+	FAureGameplayEffectContext* AureEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get());
+	AureEffectContext->SetSuccessfulDeBuff(bInIsSuccessfulDeBuff);
+	
+}
+
+void UAuraAbilitySystemLibrary::SetDeBuff(FGameplayEffectContextHandle& EffectContextHandle, FGameplayTag& InDamageType,
+	float InDamage, float InDuration, float InFrequency)
+{
+	FAureGameplayEffectContext* AureEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get());
+
+	const TSharedPtr<FGameplayTag> DamageType = MakeShared<FGameplayTag>(InDamageType);
+	AureEffectContext->SetDeBuffDamage(InDamage);
+	AureEffectContext->SetDeBuffDuration(InDuration);
+	AureEffectContext->SetDeBuffFrequency(InFrequency);
+	AureEffectContext->SetDebuffDamageType(DamageType);
+	
 }

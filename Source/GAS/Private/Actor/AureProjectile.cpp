@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -104,6 +105,7 @@ void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 
+	if (!IsValidOverlap(OtherActor)) return;
 	if (!bHit) OnHit();
 
 	//重叠后销毁
@@ -112,16 +114,33 @@ void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 		// 对目标应用伤害
 		if (UAbilitySystemComponent* TargetASC  = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
 		{
-			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectParams.Data.Get());
+			DamageEffectParams.TargetAbilitySystemComponent = TargetASC;
+			UAuraAbilitySystemLibrary::ApplyDamageEffect(DamageEffectParams);
 		}
-
-		
 		Destroy();
 	}
 	else
 	{
 		bHit = true;
 	}
+}
+
+bool AAureProjectile::IsValidOverlap(AActor* OtherActor)
+{
+	// 检查伤害效果的来源能力系统组件是否为空，如果为空则返回false，表示不产生伤害效果
+	if (DamageEffectParams.SourceAbilitySystemComponent == nullptr) return false;
+	
+	// 获取来源能力系统组件的化身演员，即伤害效果的来源实体
+	AActor* SourceAvatarActor = DamageEffectParams.SourceAbilitySystemComponent->GetAvatarActor();
+	
+	// 检查伤害来源实体是否与目标实体相同，如果相同则返回false，表示不对自己产生伤害效果
+	if (SourceAvatarActor == OtherActor) return false;
+	
+	// 使用自定义的库函数检查伤害来源实体与目标实体是否为非友军，如果不是非友军则返回false，表示不产生伤害效果
+	if (!UAuraAbilitySystemLibrary::IsNotFriend(SourceAvatarActor, OtherActor)) return false;
+	
+	// 所有检查通过，返回true，表示产生伤害效果
+	return true;
 }
 
 

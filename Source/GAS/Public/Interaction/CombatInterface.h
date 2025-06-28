@@ -3,8 +3,38 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemComponent.h"
 #include "UObject/Interface.h"
 #include "CombatInterface.generated.h"
+
+
+class UNiagaraSystem;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*)
+
+// 定义一个结构体FTaggedMontage，用于在蓝图中使用
+USTRUCT(BlueprintType)
+struct FTaggedMontage
+{
+    // 自动生成结构体所需的代码
+    GENERATED_BODY()
+
+    // 定义一个动画蒙太奇资源，只读，用于编辑默认设置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    UAnimMontage* Montage = nullptr;
+
+    // 定义动画蒙太奇的游戏玩法标签，只读，用于编辑默认设置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FGameplayTag MontageTag;
+
+    // 定义动画蒙太奇中插槽的游戏玩法标签，只读，用于编辑默认设置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FGameplayTag SocketTag;
+
+    // 定义影响声音资源，只读，用于编辑默认设置,攻击时的触发音效
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    USoundBase* ImpactSound = nullptr;
+};
+
 
 struct FGameplayTag;
 // This class does not need to be modified.
@@ -40,6 +70,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UAnimMontage* GetHitReactMontage();
 
+	
 	//获取当前角色是否死亡
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool IsDead() const; 
@@ -47,8 +78,19 @@ public:
 	//获取角色的Avatar
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	AActor* GetAvatar();
-	
 
+	//获取攻击动画
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	TArray<FTaggedMontage> GetAttackMontages();
+
+	//获取角色的受伤特效
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UNiagaraSystem* GetBloodEffect(); 
+
+    //通过标签获取对应结构体
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FTaggedMontage GetTaggedMontageByTag(const FGameplayTag& MontageTag);
+	
 	//死亡函数，子类重写
 	virtual void Die() = 0;
 };

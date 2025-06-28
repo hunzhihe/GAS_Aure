@@ -59,7 +59,7 @@ public:
 	FCharacterClassDefaultInfo GetClassDefaultInfo(ECharacterClass CharacterClass);
 
 
-	//敌人所拥有的初始技能
+	//敌人所拥有的初始职业技能
 	UPROPERTY(EditDefaultsOnly, Category="Common Class Defaults")
 	TArray<TSubclassOf<UGameplayAbility>> CommonAbilities;
 };

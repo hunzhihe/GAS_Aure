@@ -245,6 +245,14 @@ void FAureGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.DamageTypesToDebuffs.Add(GameplayTags.Damage_Fire, GameplayTags.Debuff_Burn);
 
 	/*
+	 * 负面标签和属性抵抗标签对于对应
+	*/
+	GameplayTags.DeBuffsToResistance.Add(GameplayTags.Debuff_Burn, GameplayTags.Attributes_Resistance_Fire);
+	GameplayTags.DeBuffsToResistance.Add(GameplayTags.Debuff_Stun, GameplayTags.Attributes_Resistance_Lightning);
+	GameplayTags.DeBuffsToResistance.Add(GameplayTags.Debuff_Arcane, GameplayTags.Attributes_Resistance_Arcane);
+	GameplayTags.DeBuffsToResistance.Add(GameplayTags.Debuff_Physical, GameplayTags.Attributes_Resistance_Physical);
+
+	/*
 	 * Effects
 	 */
 

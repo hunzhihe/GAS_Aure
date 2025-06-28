@@ -75,6 +75,32 @@ AActor* AAureBaseCharacter::GetAvatar_Implementation()
 	return this;
 }
 
+TArray<FTaggedMontage> AAureBaseCharacter::GetAttackMontages_Implementation()
+{
+	return AttackMontages;
+}
+
+UNiagaraSystem* AAureBaseCharacter::GetBloodEffect_Implementation()
+{
+	return BloodEffect;
+}
+
+FTaggedMontage AAureBaseCharacter::GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag)
+{
+	// 遍历攻击动画蒙太奇数组，以找到匹配指定标签的蒙太奇
+	for (FTaggedMontage TaggedMontage : AttackMontages)
+	{
+	    // 检查当前蒙太奇的标签是否与指定的蒙太奇标签精确匹配
+	    if (TaggedMontage.MontageTag.MatchesTagExact(MontageTag))
+	    {
+	        // 如果找到匹配的蒙太奇，立即返回它
+	        return TaggedMontage;
+	    }
+	}
+	// 如果没有找到匹配的蒙太奇，返回一个默认的FTaggedMontage对象
+	return FTaggedMontage();
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 {
@@ -100,6 +126,9 @@ void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 
 	//角色死亡时，调用Dissolve方法
 	Dissolve();
+
+	//设置死亡状态
+	bDead = true;
 }
 
 UAbilitySystemComponent* AAureBaseCharacter::GetAbilitySystemComponent() const

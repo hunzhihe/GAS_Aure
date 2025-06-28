@@ -8,6 +8,7 @@
 #include "GameplayEffectExtension.h"
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "GameFramework/Character.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -119,40 +120,143 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
-		const float LocalIncomingDamage = GetIncomingDamage();
-		SetIncomingDamage(0.f);
-		if (LocalIncomingDamage>0.f)
+		HandleInComingDamage(Props);
+	}
+}
+
+void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
+{
+	const float LocalIncomingDamage = GetIncomingDamage();
+	SetIncomingDamage(0.f);
+	if (LocalIncomingDamage>0.f)
+	{
+		const float NewHealth = GetHealth() - LocalIncomingDamage;
+		SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+
+		// 检查是否死亡
+		const bool bFatal = NewHealth <= 0.f;
+
+		//受击动画
+		if (!bFatal)
 		{
-			const float NewHealth = GetHealth() - LocalIncomingDamage;
-			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
-
-			// 检查是否死亡
-			const bool bFatal = NewHealth <= 0.f;
-
-			//受击动画
-			if (!bFatal)
+			FGameplayTagContainer TagContainer;
+			TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
+			Props.TargetASC->CancelAbilities(&TagContainer);
+			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+		}
+		else
+		{
+			//确认死亡的话调用死亡函数
+			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
+			if (CombatInterface)
 			{
-				FGameplayTagContainer TagContainer;
-				TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
-				Props.TargetASC->CancelAbilities(&TagContainer);
-				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
-			}
-			else
-			{
-				//确认死亡的话调用死亡函数
-				ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
-				if (CombatInterface)
-				{
-					CombatInterface->Die();
-				}
+				CombatInterface->Die();
 			}
 		}
-		//获取格挡和暴击
-		const bool IsBlockedHit = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
-		const bool IsCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
-		
-		ShowFloatingText(Props, LocalIncomingDamage, IsBlockedHit, IsCriticalHit);
 	}
+	//获取格挡和暴击
+	const bool IsBlockedHit = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+	const bool IsCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+		
+	ShowFloatingText(Props, LocalIncomingDamage, IsBlockedHit, IsCriticalHit);
+
+	//判断当前是否应用的负面效果
+	if (UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(Props.EffectContextHandle))
+	{
+		HandleDebuff(Props);
+	}
+}
+
+void UAureAttributeSet::HandleDebuff(const FEffectProperties& Props)
+{
+	//获取负面效果参数
+	const FGameplayTag DebuffType = UAuraAbilitySystemLibrary::GetDeBuffDamageType(Props.EffectContextHandle);
+	const float DebuffDamage = UAuraAbilitySystemLibrary::GetDeBuffDamage(Props.EffectContextHandle);
+	const float DebuffDuration = UAuraAbilitySystemLibrary::GetDeBuffDuration(Props.EffectContextHandle);
+	const float DebuffFrequency = UAuraAbilitySystemLibrary::GetDeBuffFrequency(Props.EffectContextHandle);
+
+	//创建GE所使用的名称，并创建一个可实例化的GE
+	FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DebuffType.ToString());
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+
+	//设置动态创建GE的属性
+	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	Effect->Period = FScalableFloat(DebuffFrequency);//设置间隔
+	Effect->DurationMagnitude = FScalableFloat(DebuffDuration);//设置持续时间
+
+	Effect->bExecutePeriodicEffectOnApplication = false;//应用后不会立即激发，而是周期到了再触发
+	Effect->PeriodicInhibitionPolicy = EGameplayEffectPeriodInhibitionRemovedPolicy::NeverReset;//设置每次应用后不会重置触发时间
+	
+	
+	// 设置效果的堆叠类型为按来源聚合，这意味着相同来源的效果将会合并
+	Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
+	
+	// 设置堆叠限制数量为1，表示最多只能有一个此效果的实例存在
+	Effect->StackLimitCount = 1;
+	
+	// 设置堆叠持续时间刷新策略为在成功应用时刷新，这意味着每次效果成功应用时，其持续时间将重置
+	Effect->StackDurationRefreshPolicy = EGameplayEffectStackingDurationPolicy::RefreshOnSuccessfulApplication;
+	
+	// 设置堆叠周期重置策略为在成功应用时重置，表示每次效果成功应用时，其周期将重新计算
+	Effect->StackPeriodResetPolicy = EGameplayEffectStackingPeriodPolicy::ResetOnSuccessfulApplication;
+	
+	// 设置堆叠过期策略为清除整个堆叠，这意味着当效果过期时，所有的堆叠层将一起消失
+	Effect->StackExpirationPolicy = EGameplayEffectStackingExpirationPolicy::ClearEntireStack;
+
+
+	// 添加一个UTargetTagsGameplayEffectComponent组件到Effect对象中
+	UTargetTagsGameplayEffectComponent& TargetTagsGameplayEffectComponent = Effect->AddComponent<UTargetTagsGameplayEffectComponent>();
+	
+	// 新建配置的目标标签变化容器
+	FInheritedTagContainer InheritableOwnedTagsContainer;
+	
+	// 向容器中添加一个标签，以标识特定的Debuff类型
+	InheritableOwnedTagsContainer.Added.AddTag(DebuffType);
+	
+	// 设置并应用新的目标标签变化容器
+	TargetTagsGameplayEffectComponent.SetAndApplyTargetTagChanges(InheritableOwnedTagsContainer);
+
+
+	// 获取当前效果的修饰符数量，并将其用作新修饰符的索引
+	const int32 Index = Effect->Modifiers.Num();
+	
+	// 在效果的修饰符列表中添加一个新的修饰符信息
+	Effect->Modifiers.Add(FGameplayModifierInfo());
+	
+	// 获取新添加的修饰符信息的引用，以便进行后续的设置
+	FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+	
+	// 设置修饰符的幅度，这里使用FScalableFloat包装器来处理可缩放的浮点数
+	ModifierInfo.ModifierMagnitude = FScalableFloat(DebuffDamage);
+	
+	// 设置修饰符的操作类型为加法，这意味着它将与现有的值相加
+	ModifierInfo.ModifierOp = EGameplayModOp::Additive;
+	
+	// 设置修饰符关联的属性，这里使用的是传入伤害属性
+	ModifierInfo.Attribute = UAureAttributeSet::GetIncomingDamageAttribute();
+
+
+	// 创建一个 gameplay effect context handle
+	FGameplayEffectContextHandle EffectContextHandle = Props.SourceASC->MakeEffectContext();
+	// 向 effect context handle 中添加施效者对象
+	EffectContextHandle.AddSourceObject(Props.SourceAvatarActor);
+	
+	// 创建一个 gameplay effect spec 实例
+	if (const FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContextHandle, 1.f))
+	{
+	    // 静态转换获取自定义 effect context
+	    FAureGameplayEffectContext* AureContext = static_cast<FAureGameplayEffectContext*>(MutableSpec->GetContext().Get());
+	    
+	    // 创建并共享 debuff 类型标签
+	    const TSharedPtr<FGameplayTag> DebuffDamageType = MakeShareable(new FGameplayTag(DebuffType));
+	    
+	    // 设置 debuff 的伤害类型
+	    AureContext->SetDebuffDamageType(DebuffDamageType);
+	    
+	    // 应用 gameplay effect spec 到目标身上
+	    Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
+	}
+	
 }
 
 void UAureAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const

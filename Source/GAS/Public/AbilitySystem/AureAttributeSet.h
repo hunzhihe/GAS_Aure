@@ -94,6 +94,12 @@ public:
 
 	//将标签映射到属性的静态函数函数
     TMap<FGameplayTag, FGameplayAttribute(*)()> TagsToAttributes;
+
+	//处理传入的参数为伤害属性时，处理的逻辑
+	void HandleInComingDamage(const FEffectProperties& Props);
+
+	//处理当前伤害触发负面效果，处理的逻辑
+	void HandleDebuff(const FEffectProperties& Props);
 	
 	/*
 	 * Primary Attributes 主属性

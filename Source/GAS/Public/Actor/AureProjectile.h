@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AureAbilityTypes.h"
 #include "GameplayEffectTypes.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/Actor.h"
@@ -28,7 +29,7 @@ public:
 
 	//放置伤害GE
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
-	FGameplayEffectSpecHandle DamageEffectParams;
+	FDamageEffectParams DamageEffectParams;
 
 protected:
 	
@@ -52,6 +53,8 @@ protected:
 	//碰撞体
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USphereComponent> Sphere;
+
+	bool IsValidOverlap(AActor* OtherActor);
 	
 	bool bHit = false;
 

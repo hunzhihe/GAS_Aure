@@ -74,6 +74,54 @@ UExecCalc_Damage::UExecCalc_Damage()
 	RelevantAttributesToCapture.Add(DamageStatics().ArcaneResistanceDef);
 }
 
+void UExecCalc_Damage::DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
+	const FGameplayEffectSpec& Spec, FAggregatorEvaluateParameters EvaluationParameters,
+	const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>& TagsToCaptrueDefs) const
+{
+	const FAureGameplayTags& GameplayTags = FAureGameplayTags::Get();
+
+	//遍历所有的负面效果伤害类型，根据伤害类型是否赋值来判断是否需要应用负面效果
+	for(const TTuple<FGameplayTag, FGameplayTag>& Pair : GameplayTags.DeBuffsToResistance)
+	{
+		FGameplayTag DeBuffDamageType = Pair.Key; //获取到负面效果伤害类型
+		const FGameplayTag ResistanceType = Pair.Value; //获取到负面效果抵抗类型
+		const float TypeDamage = Spec.GetSetByCallerMagnitude(DeBuffDamageType, false, -1.f);
+
+		//如果负面效果设置了伤害，即使为0，也需要应用负面效果
+		if(TypeDamage > -.5f)
+		{
+			//获取负面效果命中率
+			const float SourceDeBuffChance = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Chance, false, -1.f);
+
+			//----------------获取负面效果抵抗------------
+			float TargetDeBuffResistance = 0.f; //计算目标对收到的负面效果类型的抵抗
+			//检查对应的属性快照是否设置，防止报错
+			checkf(TagsToCaptrueDefs.Contains(ResistanceType), TEXT("在ExecCalc_Damage中，无法获取到Tag[%s]对应的属性快照"), *ResistanceType.ToString());
+			//通过抗性标签获取到属性快照的值
+			const FGameplayEffectAttributeCaptureDefinition CaptureDef = TagsToCaptrueDefs[ResistanceType];
+			ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, TargetDeBuffResistance);
+			TargetDeBuffResistance = FMath::Clamp(TargetDeBuffResistance, 0.f, 100.f); //将抗住限制在0到100
+
+			//----------------计算负面效果是否应用------------
+			const float EffectiveDeBuffChance = SourceDeBuffChance * (100 - TargetDeBuffResistance) / 100.f; //计算出负面效果的实际命中率
+			const bool bDeBuff = FMath::RandRange(1, 100) < EffectiveDeBuffChance; //判断此次效果是否实现命中
+			if(bDeBuff)
+			{
+				//获取GE上下文设置负面效果相关配置
+				FGameplayEffectContextHandle ContextHandle = Spec.GetContext();
+
+				//设置当前应用负面效果成功
+				UAuraAbilitySystemLibrary::SetIsSuccessfulDeBuff(ContextHandle, true);
+
+				const float SourceDeBuffDuration = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Duration, false, 0.f);
+				const float SourceDeBuffFrequency = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Frequency, false, 0.f);
+				//设置负面效果 伤害类型 伤害 持续时间 触发频率
+				UAuraAbilitySystemLibrary::SetDeBuff(ContextHandle, DeBuffDamageType, TypeDamage, SourceDeBuffDuration, SourceDeBuffFrequency);
+			}
+		}
+	}
+}
+
 void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
                                               FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
@@ -125,6 +173,11 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Lightning, DamageStatics().LightningResistanceDef);
 	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Arcane, DamageStatics().ArcaneResistanceDef);
 	TagsToCaptureDefs.Add(GameplayTags.Attributes_Resistance_Physical, DamageStatics().PhysicalResistanceDef);
+
+
+	// Debuff
+	DetermineDebuff(ExecutionParams, Spec, EvaluationParameters, TagsToCaptureDefs);
+
 	
 	//伤害
 	float Damage = 0;

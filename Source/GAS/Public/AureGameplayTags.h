@@ -104,6 +104,7 @@ public:
 	
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
+	TMap<FGameplayTag, FGameplayTag> DeBuffsToResistance;//属性伤害标签对应负面标签
 
 	FGameplayTag Effects_HitReact;
 

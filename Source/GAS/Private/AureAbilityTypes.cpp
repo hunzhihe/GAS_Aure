@@ -46,8 +46,28 @@ bool FAureGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		{
 			RepBits |= 1 << 8;
 		}
+		if(bIsSuccessfulDeBuff)
+		{
+			RepBits |= 1 << 9;
+		}
+		if(DeBuffDamage > 0.f)
+		{
+			RepBits |= 1 << 10;
+		}
+		if(DeBuffDuration > 0.f)
+		{
+			RepBits |= 1 << 11;
+		}
+		if(DeBuffFrequency > 0.f)
+		{
+			RepBits |= 1 << 12;
+		}
+		if(DamageType.IsValid())
+		{
+			RepBits |= 1 << 13;
+		}
 	}
-	Ar.SerializeBits(&RepBits, 9);
+	Ar.SerializeBits(&RepBits, 14);
 
 	if (RepBits & (1 << 0))
 	{
@@ -98,13 +118,33 @@ bool FAureGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 	{
 		Ar << bIsCriticalHit;
 	}
-
-	if (Ar.IsLoading())
+	if (RepBits & (1 << 9))
 	{
-		AddInstigator(Instigator.Get(), EffectCauser.Get()); // Just to initialize InstigatorAbilitySystemComponent
-	}	
-
-	bOutSuccess = true;
-	return true;
+		Ar << bIsSuccessfulDeBuff;
+	}
+	if (RepBits & (1 << 10))
+	{
+		Ar << DeBuffDamage;
+	}
+	if (RepBits & (1 << 11))
+	{
+		Ar << DeBuffDuration;
+	}
+	if (RepBits & (1 << 12))
+	{
+		Ar << DeBuffFrequency;
+	}
+	if (RepBits & (1 << 13))
+	{
+		if (Ar.IsLoading()) //判断是否在加载资源
+		{
+			if (!DamageType.IsValid())
+			{
+				DamageType = TSharedPtr<FGameplayTag>(new FGameplayTag());
+			}
+		}
+		DamageType->NetSerialize(Ar, Map, bOutSuccess);
+	}
 	
+	return true;
 }

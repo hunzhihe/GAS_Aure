@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AureAbilityTypes.h"
 #include "GameplayEffectTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AuraAbilitySystemLibrary.generated.h"
@@ -86,6 +87,43 @@ public:
 	/*--------Gameplay Mechanics--------*/
 	//获取到攻击位置半径内的所有动态Actor
 	UFUNCTION(BlueprintCallable, Category="MyAbilitySystemLibrary|GameplayMechanics")
-	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject, TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
+	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject,
+		TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
+	
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
+	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|DamageEffect")
+	static FGameplayEffectContextHandle ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams);
+
+	/*---------GameplayEffectDebuff---------*/
+	//获取当前GE是否成功应用负面效果
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static bool IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//获取当前GE负面效果伤害
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static float GetDeBuffDamage(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//获取当前GE负面效果持续时间
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static float GetDeBuffDuration(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//获取当前GE负面效果触发间隔
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static float GetDeBuffFrequency(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//获取当前GE负面效果伤害类型
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static FGameplayTag GetDeBuffDamageType(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//设置GE是否应用负面效果
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetIsSuccessfulDeBuff(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsSuccessfulDeBuff);
+
+	//设置GE负面效果相关数值 负面效果伤害类型 负面效果伤害 负面效果持续时间 负面效果触发间隔时间
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetDeBuff(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, FGameplayTag& InDamageType, float InDamage, float InDuration, float InFrequency);
+
 	
 };

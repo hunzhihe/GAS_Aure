@@ -87,7 +87,12 @@ int32 AAureEnemy::GetPlayerLevel_Implementation()
 
 void AAureEnemy::Die()
 {
+	if (AureAIController)
+	{
+		AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
+	}
 	SetLifeSpan(LifeSpan);
+	
 	Super::Die();
 }
 
@@ -154,7 +159,6 @@ void AAureEnemy::BeginPlay()
 		OnHealthChanged.Broadcast(AS->GetHealth());
 		OnMaxHealthChanged.Broadcast(AS->GetMaxHealth());
 	}
-	
 	
 }
 
