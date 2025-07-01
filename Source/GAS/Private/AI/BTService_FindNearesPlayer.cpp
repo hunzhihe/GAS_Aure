@@ -5,6 +5,7 @@
 
 #include "AIController.h"
 #include "BehaviorTree/BTFunctionLibrary.h"
+#include "Character/AureBaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 void UBTService_FindNearesPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
@@ -30,9 +31,12 @@ void UBTService_FindNearesPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	// 遍历所有具有目标标签的Actor，找到最近的一个
 	for (AActor* Actor : ActorsWithTag)
 	{
+		AAureBaseCharacter* BaseCharacter = Cast<AAureBaseCharacter>(Actor);
+		
 	    // 检查Actor和OwningPawn的有效性
-	    if (IsValid(Actor) && IsValid(OwningPawn))
+	    if (IsValid(Actor) && IsValid(OwningPawn) && !BaseCharacter->IsDead_Implementation())
 	    {
+	    	
 	        // 计算OwningPawn到当前Actor的距离
 	        const float Distance = OwningPawn->GetDistanceTo(Actor);
 	        // 如果当前距离小于已记录的最近距离，则更新最近距离和最近的Actor

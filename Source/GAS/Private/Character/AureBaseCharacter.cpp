@@ -101,6 +101,16 @@ FTaggedMontage AAureBaseCharacter::GetTaggedMontageByTag_Implementation(const FG
 	return FTaggedMontage();
 }
 
+int32 AAureBaseCharacter::GetMinionCount_Implementation()
+{
+	return  MinionsCount;
+}
+
+void AAureBaseCharacter::IncrementMinionCount_Implementation(const int32 Amount)
+{
+	MinionsCount += Amount;
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 {
@@ -122,10 +132,11 @@ void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 
 	//关闭角色碰撞体碰撞通道，避免其对武器和角色模拟物理效果产生影响
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility,ECR_Ignore);
 
 	//角色死亡时，调用Dissolve方法
 	Dissolve();
+	
 
 	//设置死亡状态
 	bDead = true;

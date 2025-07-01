@@ -7,6 +7,7 @@
 #include "Interaction/PlayerInterface.h"
 #include "AureCharacter.generated.h"
 
+class UCameraComponent;
 /**
  * 
  */
@@ -25,9 +26,19 @@ public:
 
 	/* ICombatInterface战斗接口 */
 	virtual int32 GetPlayerLevel_Implementation() override;
+	virtual void Die() override;
 	/* ICombatInterface战斗接口 结束 */
 
+	UPROPERTY(EditDefaultsOnly)
+	float DeathTime = 5.f;
+
+	FTimerHandle DeathTimer;
+
 protected:
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCameraComponent> TopDownCameraComponent;
+	
 	virtual  void InitAbilityActorInfo() override;
 	
 };

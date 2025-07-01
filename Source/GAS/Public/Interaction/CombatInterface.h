@@ -69,7 +69,6 @@ public:
 	//获取受击动画
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UAnimMontage* GetHitReactMontage();
-
 	
 	//获取当前角色是否死亡
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -93,4 +92,12 @@ public:
 	
 	//死亡函数，子类重写
 	virtual void Die() = 0;
+
+	//获取角色拥有的仆从数量
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int32 GetMinionCount();
+
+	//设置角色仆从的增长数量
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void IncrementMinionCount(const int32 Amount);
 };

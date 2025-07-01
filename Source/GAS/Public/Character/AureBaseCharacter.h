@@ -37,6 +37,8 @@ public:
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
 	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
 	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
+	virtual int32 GetMinionCount_Implementation() override;
+	virtual void IncrementMinionCount_Implementation(const int32 Amount) override;
 	/** end Combat Interface */
 
     // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
@@ -46,6 +48,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TArray<FTaggedMontage> AttackMontages;
+
+
 
 	
 
@@ -73,7 +77,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
-
+    //召唤的仆从数量
+	UPROPERTY(BlueprintReadOnly, Category="Combat")
+	int32 MinionsCount = 0; 
+	
+	
 	bool bDead = false;
 	
 	UPROPERTY()

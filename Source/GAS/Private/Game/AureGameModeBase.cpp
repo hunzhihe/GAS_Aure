@@ -3,3 +3,6 @@
 
 #include "Game/AureGameModeBase.h"
 
+void AAureGameModeBase::PlayerDied(ACharacter* DeadCharacter)
+{
+}

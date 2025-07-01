@@ -4,8 +4,11 @@
 #include "Character/AureCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "BlueprintAssetNodeSpawner.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
+#include "Game/AureGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/AurePlayerController.h"
 #include "Player/AurePlayerState.h"
 #include "UI/HUD/AureHUD.h"
@@ -48,6 +51,11 @@ int32 AAureCharacter::GetPlayerLevel_Implementation()
 	const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
 	check(AurePlayerState);
 	return AurePlayerState->GetPlayerLevel();
+}
+
+void AAureCharacter::Die()
+{
+	Super::Die();
 }
 
 
