@@ -18,6 +18,7 @@ void UAureWidgetController::SetWidgetControllerParams(const FWidgetControllerPar
 
 void UAureWidgetController::BroadcastInitialValues()
 {
+	if (!GetAureASC()->bStartupAbilitiesGiven) return;
 }
 
 void UAureWidgetController::BindCallbacksToDependencies()

@@ -13,7 +13,8 @@ class AAurePlayerController;
 class UAttributeSet;
 class UAbilitySystemComponent;
 
-
+//该委托用来在蓝图中监听技能信息
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FAureAbilityInfo&, Info);
 
 // 定义一个结构体FWidgetControllerParams，用于存储小部件控制器的参数
 USTRUCT(BlueprintType)
@@ -63,6 +64,11 @@ public:
 
 	//绑定数值变动后回调的广播
 	virtual void BindCallbacksToDependencies();
+
+	//绑定技能信息监听回调的广播
+	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
+	FAbilityInfoSignature AbilityInfoDelegate;
+
 
 // 用于UI控制器的属性，仅在蓝图中可读
 protected:

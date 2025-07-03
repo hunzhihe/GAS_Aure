@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 #include "UI/WidgetController/AureWidgetController.h"
 #include "OverlayWidgetController.generated.h"
 
@@ -38,6 +39,8 @@ public:
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature, float, NewMana);
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaMaxChangedSignature, float, NewManaMax);
 
+class UAureAbilitySystemComponent;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature,float,NewAttribute);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
@@ -51,7 +54,9 @@ class GAS_API UOverlayWidgetController : public UAureWidgetController
 	GENERATED_BODY()
 
 public:
+	// 初始化数据
 	virtual void BroadcastInitialValues() override;
+	//绑定回调委托
 	virtual void BindCallbacksToDependencies() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Attributes")
@@ -66,6 +71,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
 
+
+	//技能的表格数据
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
+
+	//技能初始化应用后的回调
+	void OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const;
+
+	
 protected:
 	// void HealthChanged(const FOnAttributeChangeData& Data) const;
 	// void MaxHealthChanged(const FOnAttributeChangeData& Data) const;

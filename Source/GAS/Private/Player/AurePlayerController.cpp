@@ -213,7 +213,7 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	    // 获取当前控制的Pawn
 	    const APawn* ControlledPawn = GetPawn();
 	    // 检查FollowTime是否小于短按阈值且ControlledPawn存在
-	    if(FollowTime <= ShortPressThreshold && ControlledPawn && CursorHit.bBlockingHit)
+	    if(FollowTime <= ShortPressThreshold && ControlledPawn)
 	    {
 	        // 使用UNavigationSystemV1找到从当前Pawn位置到缓存目标位置的路径
 	        if(UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(
@@ -226,9 +226,9 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	            {
 	                // 将新的位置添加到样条曲线中
 	                Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-	                 //DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
+	                 DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
 	            }
-	            if (NavPath && NavPath->PathPoints.Num() > 0)
+	            if (NavPath->PathPoints.Num() > 0)
 	            {
 	            	// 自动寻路将最终目的地设置为导航的终点，方便停止导航
 	            	CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
@@ -262,7 +262,7 @@ void AAurePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	
 	    // 获取鼠标拾取位置
 	    if(CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
-	
+		DrawDebugSphere(GetWorld(), CachedDestination, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
 	    // 如果控制了Pawn，则计算世界方向并添加移动输入
 	    if(APawn* ControlledPawn = GetPawn())
 	    {

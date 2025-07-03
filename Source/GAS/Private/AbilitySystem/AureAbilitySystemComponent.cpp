@@ -5,6 +5,7 @@
 
 #include "AureGameplayTags.h"
 #include "AbilitySystem/Ability/AureGameplayAbility.h"
+#include "GAS/AureLogChannels.h"
 
 
 void UAureAbilitySystemComponent::AbilityActorInfoSet()
@@ -13,6 +14,16 @@ void UAureAbilitySystemComponent::AbilityActorInfoSet()
 	// 当游戏玩法效果应用于此组件时，将触发ClientEffectApplied_Implementation函数
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(
 	    this, &UAureAbilitySystemComponent::ClientEffectApplied);
+}
+
+void UAureAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+	if(!bStartupAbilitiesGiven)
+	{
+		bStartupAbilitiesGiven = true;
+		AbilitiesGivenDelegate.Broadcast(this);
+	}
 }
 
 void UAureAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities)
@@ -33,6 +44,9 @@ void UAureAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 		    GiveAbility(AbilitySpec);
 		}
 	}
+	//技能初始化完成，并广播
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast(this);
 }
 
 void UAureAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
@@ -80,6 +94,55 @@ void UAureAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& In
 	        AbilitySpecInputReleased(AbilitySpec);
 	    }
 	}
+}
+
+void UAureAbilitySystemComponent::ForEachAbility(const FForEachAbility& Delegate)
+{
+	//适用域锁将此作用域this的内容锁定（无法修改），在遍历结束时解锁，保证线程安全
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		//运行绑定在技能实例上的委托，如果失败返回false
+		if (!Delegate.ExecuteIfBound(AbilitySpec))
+		{
+			UE_LOG(LogAure,Error,TEXT("在函数[%hs]运行委托失败"),__FUNCTION__)
+		}
+	}
+}
+
+FGameplayTag UAureAbilitySystemComponent::GetAbilityTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	// 检查AbilitySpec中是否指定了能力
+	if (AbilitySpec.Ability)
+	{
+	    // 遍历能力的标签，寻找特定的"Abilities"标签
+	    for (FGameplayTag Tag : AbilitySpec.Ability.Get()->GetAssetTags())
+	    {
+	        // 如果标签匹配"Abilities"，则返回该标签
+	        if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Abilities"))))
+	        {
+	            return Tag;
+	        }
+	    }
+	}
+	// 如果没有找到匹配的标签，返回一个空的标签
+	return FGameplayTag();
+}
+
+FGameplayTag UAureAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	// 遍历能力规格中的动态规格源标签
+	for (FGameplayTag Tag : AbilitySpec.GetDynamicSpecSourceTags())
+	{
+	    // 检查当前标签是否匹配"InputTag"游戏标签
+	    if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("InputTag"))))
+	    {
+	        // 如果匹配，则返回该标签
+	        return Tag;
+	    }
+	}
+	// 如果没有找到匹配的标签，则返回一个空的游戏标签
+	return FGameplayTag();
 }
 
 void UAureAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,
