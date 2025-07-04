@@ -42,7 +42,7 @@ public:
 class UAureAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature,float,NewAttribute);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLevelChangedSignature, int32, NewLevel, bool, bLevelUp);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
 
 /**
@@ -71,6 +71,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
 
+	//检验条变动回调
+	UPROPERTY(BlueprintAssignable, Category="GAS|XP")
+	FOnAttributeChangedSignature OnXPPercentChangedDelegate;
+
+	//玩家等级变动回调
+	UPROPERTY(BlueprintAssignable, Category="GAS|Level")
+	FOnLevelChangedSignature OnPlayerLevelChangedDelegate;
 
 	//技能的表格数据
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget Data")
@@ -79,6 +86,8 @@ public:
 	//技能初始化应用后的回调
 	void OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const;
 
+	//经验变动后的回调
+	void OnXPChanged(int32 NewXP);
 	
 protected:
 	// void HealthChanged(const FOnAttributeChangeData& Data) const;

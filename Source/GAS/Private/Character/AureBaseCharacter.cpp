@@ -111,6 +111,11 @@ void AAureBaseCharacter::IncrementMinionCount_Implementation(const int32 Amount)
 	MinionsCount += Amount;
 }
 
+ECharacterClass AAureBaseCharacter::GetCharacterClass_Implementation()
+{
+	return CharacterClass;
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 {
@@ -200,6 +205,7 @@ void AAureBaseCharacter::AddCharacterAbilities()
 	
 	// 为角色添加初始技能
 	AureAbilitySystemComponent->AddCharacterAbilities(StartupAbilities);
+	AureAbilitySystemComponent->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 }
 
 void AAureBaseCharacter::Dissolve()

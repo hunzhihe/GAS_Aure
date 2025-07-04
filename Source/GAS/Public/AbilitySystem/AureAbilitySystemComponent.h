@@ -39,7 +39,8 @@ public:
 
 	//添加角色技能
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
-
+	//添加角色被动技能
+	void AddCharacterPassiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupPassiveAbilities);
 	//用来确认当运行时，是技能的初始化先完成，还是UI的初始化先完成
 	bool bStartupAbilitiesGiven = false;
 

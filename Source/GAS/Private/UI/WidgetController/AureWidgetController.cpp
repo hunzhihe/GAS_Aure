@@ -34,7 +34,7 @@ AAurePlayerController* UAureWidgetController::GetAurePC()
 	return AurePlayerController;
 }
 
-AAurePlayerState* UAureWidgetController::GetAurePS()
+ AAurePlayerState* UAureWidgetController::GetAurePS() 
 {
 	if (AurePlayerState == nullptr)
 	{

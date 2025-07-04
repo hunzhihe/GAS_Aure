@@ -289,6 +289,24 @@ FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const 
 	return EffectContexthandle;
 }
 
+int32 UAuraAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* WorldContextObject,
+	ECharacterClass CharacterClass, int32 CharacterLevel)
+{
+	// 获取角色类信息对象
+    UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
+    // 如果角色类信息对象为空，则返回0
+    if (CharacterClassInfo == nullptr) return 0;
+
+    // 获取指定角色类的默认信息
+    const FCharacterClassDefaultInfo& Info = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
+    // 根据角色等级获取经验值奖励
+    const float XPReward = Info.XPReward.GetValueAtLevel(CharacterLevel);
+
+    // 将浮点数经验值奖励转换为整型并返回
+    return static_cast<int32>(XPReward);
+
+}
+
 bool UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle)
 {
 	// 将EffectContextHandle转换为FAureGameplayEffectContext类型

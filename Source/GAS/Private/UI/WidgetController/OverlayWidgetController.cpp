@@ -4,6 +4,8 @@
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/AureAttributeSet.h"
+#include "AbilitySystem/Data/LevelUpInfo.h"
+#include "Player/AurePlayerState.h"
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
@@ -18,7 +20,17 @@ void UOverlayWidgetController::BroadcastInitialValues()
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	//const UAureAttributeSet* AureAttributeSet = CastChecked<UAureAttributeSet>(AttributeSet);
+	// 当经验点(XP)发生变化时，注册一个回调函数
+	GetAurePS()->OnXPChangedDelegate.AddUObject(this, &ThisClass::OnXPChanged);
+	
+	// 当玩家等级发生变化时，注册一个Lambda回调函数
+	GetAurePS()->OnLevelChangedDelegate.AddLambda(
+	    [this](int32 NewLevel, bool bLevelUp)
+	    {
+	        // 当玩家等级变化时，广播该变化
+	        OnPlayerLevelChangedDelegate.Broadcast(NewLevel, bLevelUp);
+	    }
+	);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		GetAureAS()->GetHealthAttribute()).AddLambda(
@@ -94,4 +106,38 @@ void UOverlayWidgetController::OnInitializeStartupAbilities(UAureAbilitySystemCo
 
 	//遍历技能并触发委托回调
 	AureAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
+}
+
+void UOverlayWidgetController::OnXPChanged(int32 NewXP) 
+{
+   // 获取玩家升级信息对象
+   ULevelUpInfo* LevelUpInfo = GetAurePS()->LevelUpInfo;
+   // 确保LevelUpInfo不为空，否则抛出异常
+   checkf(LevelUpInfo, TEXT("无法查询到等级相关数据，请查看PlayerState是否设置了对应的数据"));
+
+   // 根据新经验值找到对应的等级
+   const int32 Level = LevelUpInfo->FindLevelForXP(NewXP);
+   // 获取最大等级
+   const int32 MaxLevel = LevelUpInfo->LevelUpInformation.Num();
+
+   // 检查当前等级是否在有效范围内
+   if (Level <= MaxLevel && Level > 0)
+   {
+    // 获取当前等级的升级所需经验值
+    const int32 LevelUpRequirement = LevelUpInfo->LevelUpInformation[Level].LevelUpRequirement;
+    // 获取前一级的升级所需经验值
+    const int32 PreviousLevelUpRequirement = LevelUpInfo->LevelUpInformation[Level - 1].LevelUpRequirement;
+
+    // 计算当前等级的经验值区间
+    const int32 DeltaLevelRequirement = LevelUpRequirement - PreviousLevelUpRequirement;
+    // 计算玩家在当前等级的经验值
+    const int32 XPForThisLevel = NewXP - PreviousLevelUpRequirement;
+
+    // 计算经验值百分比
+    const float XPBarPercent = static_cast<float>(XPForThisLevel) / static_cast<float>(DeltaLevelRequirement);
+
+    // 广播经验值百分比变化事件
+    OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
+    }
+
 }

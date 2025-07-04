@@ -7,12 +7,15 @@
 #include "GameFramework/PlayerState.h"
 #include "AurePlayerState.generated.h"
 
+class ULevelUpInfo;
 class UAttributeSet;
 class UAbilitySystemComponent;
 /**
  * 
  */
+//动态委托，用于在经验值等发生变化后，触发UI更新
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32 /*StatValue*/)
+//动态委托，用于在等级发生变化后，触发UI更新
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnLevelChanged, int32 /*StatValue*/, bool /*bLevelUp*/)
 
 
@@ -33,8 +36,11 @@ public:
 	// 获取属性集
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
+    //设置升级 信息
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<ULevelUpInfo> LevelUpInfo;
 
-
+	//升级的相关委托
 	FOnPlayerStatChanged OnXPChangedDelegate;
 	FOnLevelChanged OnLevelChangedDelegate;
 	FOnPlayerStatChanged OnAttributePointsChangedDelegate;
@@ -45,12 +51,31 @@ public:
 	FORCEINLINE int32 GetXP() const { return XP; }
 	FORCEINLINE int32 GetAttributePoints() const { return AttributePoints; }
 	FORCEINLINE int32 GetSpellPoints() const { return SpellPoints; }
+
+	/*
+	 * 增加相关属性
+	 */
+	void AddToXP(int32 InXP);
+	void AddToLevel(int32 InLevel);
+	void AddToAttributePoints(int32 InPoints);
+	void AddToSpellPoints(int32 InPoints);
+
+	
+    /**
+	 * 设置相关属性
+	 */
+	void SetXP(int32 InXP);
+	void SetLevel(int32 InLevel);
+	void SetAttributePoints(int32 InPoints);
+	void SetSpellPoints(int32 InPoints);
 	
 protected:
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+	
+	
 private:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_Level)
 	int32 Level = 1;
@@ -63,7 +88,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_SpellPoints)
 	int32 SpellPoints = 0;
-	
+
+
+	//服务器同步函数
 	UFUNCTION()
 	void OnRep_Level(int32 OldLevel);
 

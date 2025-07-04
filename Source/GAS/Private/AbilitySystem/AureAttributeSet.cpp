@@ -9,6 +9,7 @@
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
+#include "GAS/AureLogChannels.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -152,6 +153,9 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 			{
 				CombatInterface->Die();
 			}
+			//发送经验
+			SendXPEvent(Props);
+			
 		}
 	}
 	//获取格挡和暴击
@@ -396,6 +400,11 @@ void UAureAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 	    Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
 	    Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
 	}
+	// if(Data.EvaluatedData.Attribute == GetIncomingXPAttribute())  
+	// {
+	// 	UE_LOG(LogAure, Log, TEXT("获取传入经验值：%f"), GetIncomingXP());
+	// 	//SetIncomingXP(0);
+	// }
 }
 
 void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const float Damage, bool IsBlockedHit, bool IsCriticalHit)
@@ -414,4 +423,30 @@ void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const f
 		}
 		
 	}
+}
+
+void UAureAttributeSet::SendXPEvent(const FEffectProperties& Props)
+{
+	// 检查目标角色是否实现了UCombatInterface接口
+    if (Props.TargetCharacter->Implements<UCombatInterface>())
+    {
+    // 通过UCombatInterface接口获取目标角色的玩家等级
+    const int32 TargetLevel = ICombatInterface::Execute_GetPlayerLevel(Props.TargetCharacter);
+    // 通过UCombatInterface接口获取目标角色的角色类别
+    const ECharacterClass TargetClass = ICombatInterface::Execute_GetCharacterClass(Props.TargetCharacter);
+    // 根据目标角色的类别和等级获取经验值奖励
+    const int32 XPReward = UAuraAbilitySystemLibrary::GetXPRewardForClassAndLevel(Props.TargetCharacter, TargetClass, TargetLevel);
+
+    // 获取游戏玩法标签实例
+    const FAureGameplayTags& GameplayTags = FAureGameplayTags::Get();
+    // 初始化游戏玩法事件数据负载
+    FGameplayEventData Payload;
+    // 设置事件标签为即将获得的经验值
+    Payload.EventTag = GameplayTags.Attributes_Meta_IncomingXP;
+    // 设置事件数值为经验值奖励
+    Payload.EventMagnitude = XPReward;
+    // 向源角色发送游戏玩法事件，传递经验值奖励信息
+    UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.SourceCharacter, GameplayTags.Attributes_Meta_IncomingXP, Payload);
+    }
+
 }

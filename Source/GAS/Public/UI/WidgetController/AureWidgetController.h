@@ -102,7 +102,7 @@ protected:
 
 
 	AAurePlayerController* GetAurePC();
-	AAurePlayerState* GetAurePS();
+	AAurePlayerState* GetAurePS() ;
 	UAureAbilitySystemComponent* GetAureASC();
 	UAureAttributeSet* GetAureAS();
 };

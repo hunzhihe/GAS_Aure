@@ -25,6 +25,9 @@ AAureCharacter::AAureCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
+
+	//设置玩家职业
+	CharacterClass = ECharacterClass::Elementalist;
 	
 }
 

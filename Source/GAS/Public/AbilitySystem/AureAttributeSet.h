@@ -95,11 +95,7 @@ public:
 	//将标签映射到属性的静态函数函数
     TMap<FGameplayTag, FGameplayAttribute(*)()> TagsToAttributes;
 
-	//处理传入的参数为伤害属性时，处理的逻辑
-	void HandleInComingDamage(const FEffectProperties& Props);
 
-	//处理当前伤害触发负面效果，处理的逻辑
-	void HandleDebuff(const FEffectProperties& Props);
 	
 	/*
 	 * Primary Attributes 主属性
@@ -280,9 +276,17 @@ public:
 	void OnRep_PhysicalResistance(const FGameplayAttributeData& OldPhysicalResistance) const;
 
 private:
+
+	//处理传入的参数为伤害属性时，处理的逻辑
+	void HandleInComingDamage(const FEffectProperties& Props);
+
+	//处理当前伤害触发负面效果，处理的逻辑
+	void HandleDebuff(const FEffectProperties& Props);
+	
 	// 设置效果属性 生成结构体的值
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
 	// 显示伤害浮点数
 	static void ShowFloatingText(const FEffectProperties& Props, const float Damage, bool IsBlockedHit, bool IsCriticalHit);
-
+    // 发送XP事件
+	void SendXPEvent(const FEffectProperties& Props);
 };
