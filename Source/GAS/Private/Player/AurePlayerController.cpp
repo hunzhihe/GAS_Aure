@@ -13,6 +13,7 @@
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "Components/SplineComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "Input/AureEnhancedInputComponent.h"
 #include "Interaction/HighlightInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
@@ -201,6 +202,9 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	    if(GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 	    return;
 	}
+
+	// 获取当前控制的Pawn
+	const APawn* ControlledPawn = GetPawn();
 	
 	// 如果当前处于目标锁定状态
 	if(bTargeting)
@@ -210,8 +214,7 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	}
 	else
 	{
-	    // 获取当前控制的Pawn
-	    const APawn* ControlledPawn = GetPawn();
+	   
 	    // 检查FollowTime是否小于短按阈值且ControlledPawn存在
 	    if(FollowTime <= ShortPressThreshold && ControlledPawn)
 	    {
@@ -226,7 +229,7 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	            {
 	                // 将新的位置添加到样条曲线中
 	                Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-	                 DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
+	                 //DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
 	            }
 	            if (NavPath->PathPoints.Num() > 0)
 	            {
@@ -249,11 +252,17 @@ void AAurePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	    if(GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
 	    return;
 	}
+
+	// 获取当前控制的Pawn
+	APawn* ControlledPawn = GetPawn();
+	
 	// 根据是否处于目标锁定状态执行不同的逻辑
 	if(bTargeting||bShiftKeyDown)
 	{
 	    // 如果处于目标锁定状态且存在ASC，则调用其AbilityInputTagHeld方法
 	    if(GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
+		Spline->ClearSplinePoints();
+		CachedDestination = ControlledPawn->GetActorLocation();
 	}
 	else
 	{
@@ -262,9 +271,9 @@ void AAurePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	
 	    // 获取鼠标拾取位置
 	    if(CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
-		DrawDebugSphere(GetWorld(), CachedDestination, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
+		//DrawDebugSphere(GetWorld(), CachedDestination, 8.f, 8, FColor::Orange, false, 5.f); // 点击后debug调试
 	    // 如果控制了Pawn，则计算世界方向并添加移动输入
-	    if(APawn* ControlledPawn = GetPawn())
+	    if(ControlledPawn)
 	    {
 	        // 计算从Pawn位置到目标位置的世界方向
 	        const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();

@@ -70,7 +70,7 @@ void UTargetDataUnderMouses::SendMouseCursorData()
     FHitResult CursorHit;
     
     // 使用玩家控制器获取鼠标光标下的碰撞信息
-    PC->GetHitResultUnderCursor(ECC_Target, false, CursorHit);
+    PC->GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 
     // 创建一个游戏能力目标数据句柄
     FGameplayAbilityTargetDataHandle DataHandle;
