@@ -84,8 +84,11 @@ public:
 	 */
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
+	// 属性值改变后
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+
 	/*
-	 * 属性改变后，在属性值改变之后调用
+	 * GE激活，属性值改变之后调用
 	 * @param Data 属性改变数据
 	 * 主要是去修正数值，在PreAttributeChange回调里面，只能修正显示的结果，实际结果没有变
 	 */
@@ -282,6 +285,9 @@ private:
 
 	//处理当前伤害触发负面效果，处理的逻辑
 	void HandleDebuff(const FEffectProperties& Props);
+
+	//处理传入的参数为经验值时，处理的逻辑
+	void HandleIncomingXP(const FEffectProperties& Props);
 	
 	// 设置效果属性 生成结构体的值
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
@@ -289,4 +295,7 @@ private:
 	static void ShowFloatingText(const FEffectProperties& Props, const float Damage, bool IsBlockedHit, bool IsCriticalHit);
     // 发送XP事件
 	void SendXPEvent(const FEffectProperties& Props);
+
+	bool bTopOffHealth = false;
+	bool bTopOffMana = false;
 };

@@ -92,10 +92,10 @@ private:
 
 	//服务器同步函数
 	UFUNCTION()
-	void OnRep_Level(int32 OldLevel);
+	void OnRep_Level(int32 OldLevel) const;
 
 	UFUNCTION()
-	void OnRep_XP(int32 OldXP);
+	void OnRep_XP(int32 OldXP)  const;
 
 	UFUNCTION()
 	void OnRep_AttributePoints(int32 OldAttributePoints);

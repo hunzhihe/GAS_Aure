@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "BlueprintAssetNodeSpawner.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
+#include "AbilitySystem/Data/LevelUpInfo.h"
 #include "Game/AureGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -59,6 +60,76 @@ int32 AAureCharacter::GetPlayerLevel_Implementation()
 void AAureCharacter::Die()
 {
 	Super::Die();
+}
+
+void AAureCharacter::AddToXP_Implementation(int32 InXP)
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	 check(AurePlayerState);
+	 AurePlayerState->AddToXP(InXP);
+}
+
+int32 AAureCharacter::GetXP_Implementation() const
+{
+	const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->GetXP();
+}
+
+int32 AAureCharacter::FindLevelForXP_Implementation(int32 InXP) const
+{
+	const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->LevelUpInfo->FindLevelForXP(InXP);
+}
+
+int32 AAureCharacter::GetAttributePointsReward_Implementation(int32 Level) const
+{
+	const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->LevelUpInfo->LevelUpInformation[Level].AttributePointAward;
+}
+
+int32 AAureCharacter::GetSpellPointsReward_Implementation(int32 Level) const
+{
+	const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->LevelUpInfo->LevelUpInformation[Level].SpellPointAward;
+}
+
+void AAureCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel)
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	AurePlayerState->AddToLevel(InPlayerLevel);
+}
+
+void AAureCharacter::AddToAttributePoints_Implementation(int32 InAttributePoints)
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	AurePlayerState->AddToAttributePoints(InAttributePoints);
+}
+
+void AAureCharacter::AddToSpellPoints_Implementation(int32 InSpellPoints)
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	AurePlayerState->AddToSpellPoints(InSpellPoints);
+}
+
+int32 AAureCharacter::GetAttributePoints_Implementation() const
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->GetAttributePoints();
+}
+
+int32 AAureCharacter::GetSpellPoints_Implementation() const
+{
+	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
+	check(AurePlayerState);
+	return AurePlayerState->GetSpellPoints();
 }
 
 

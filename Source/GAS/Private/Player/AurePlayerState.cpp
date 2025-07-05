@@ -43,7 +43,7 @@ UAbilitySystemComponent* AAurePlayerState::GetAbilitySystemComponent() const
 void AAurePlayerState::AddToXP(int32 InXP)
 {
 	XP += InXP;
-	OnXPChangedDelegate.Broadcast(InXP);
+	OnXPChangedDelegate.Broadcast(XP);
 }
 
 void AAurePlayerState::AddToLevel(int32 InLevel)
@@ -88,22 +88,22 @@ void AAurePlayerState::SetSpellPoints(int32 InPoints)
 	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
 }
 
-void AAurePlayerState::OnRep_Level(int32 OldLevel)
+void AAurePlayerState::OnRep_Level(int32 OldLevel) const
 {
 	OnLevelChangedDelegate.Broadcast(Level,Level > OldLevel);
 }
 
-void AAurePlayerState::OnRep_XP(int32 OldXP)
+void AAurePlayerState::OnRep_XP(int32 OldXP) const
 {
-	OnXPChangedDelegate.Broadcast(XP);
+	OnXPChangedDelegate.Broadcast(OldXP);
 }
 
 void AAurePlayerState::OnRep_AttributePoints(int32 OldAttributePoints)
 {
-	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+	OnAttributePointsChangedDelegate.Broadcast(OldAttributePoints);
 }
 
 void AAurePlayerState::OnRep_SpellPoints(int32 OldSpellPoints)
 {
-	OnSpellPointsChangedDelegate.Broadcast(SpellPoints);
+	OnSpellPointsChangedDelegate.Broadcast(OldSpellPoints);
 }

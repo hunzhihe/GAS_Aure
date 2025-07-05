@@ -11,6 +11,7 @@
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "GAS/AureLogChannels.h"
 #include "Interaction/CombatInterface.h"
+#include "Interaction/PlayerInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/AurePlayerController.h"
@@ -101,6 +102,22 @@ void UAureAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	}
 }
 
+void UAureAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	
+	if (Attribute == GetMaxHealthAttribute() && bTopOffHealth)
+	{
+		SetHealth(GetMaxHealth());
+		bTopOffHealth = false;
+	}
+	if (Attribute == GetMaxManaAttribute() && bTopOffMana)
+	{
+		SetMana(GetMaxMana());
+		bTopOffMana = false;
+	}
+}
+
 void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
@@ -122,6 +139,17 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
 		HandleInComingDamage(Props);
+	}
+	if (Data.EvaluatedData.Attribute == GetIncomingXPAttribute())
+	{
+		 //const float LocalIncomingXP = GetIncomingXP();
+		 //SetIncomingXP(0);
+		 // if(Props.SourceCharacter->Implements<UPlayerInterface>())
+		 // {
+		 // 	IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
+		 // }
+		UE_LOG(LogAure, Log, TEXT("获取传入经验值：%f"), GetIncomingXP());
+		HandleIncomingXP(Props);
 	}
 }
 
@@ -155,7 +183,6 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 			}
 			//发送经验
 			SendXPEvent(Props);
-			
 		}
 	}
 	//获取格挡和暴击
@@ -261,6 +288,56 @@ void UAureAttributeSet::HandleDebuff(const FEffectProperties& Props)
 	    Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
 	}
 	
+}
+
+void UAureAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
+{
+	// 获取即将获得的经验值并将其设置为0，为后续的等级提升计算做准备
+	const float LocalIncomingXP = GetIncomingXP();
+	SetIncomingXP(0.f);
+	
+	// 检查目标角色是否实现了玩家接口和战斗接口
+	if (Props.SourceCharacter->Implements<UPlayerInterface>() && Props.SourceCharacter->Implements<UCombatInterface>())
+	{
+	    // 获取当前角色的等级和经验值
+	    const int32 CurrentLevel = ICombatInterface::Execute_GetPlayerLevel(Props.SourceCharacter);
+	    const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceCharacter);
+	
+	    // 计算加上即将获得的经验值后的新等级
+	    const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceCharacter, CurrentXP + LocalIncomingXP);
+	    const int32 NumLevelUps = NewLevel - CurrentLevel;
+	    // 如果有等级提升，则执行相关操作
+	    if (NumLevelUps > 0)
+	    {
+	        // 将等级提升的次数加到玩家等级上
+	        IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumLevelUps);
+	
+	        // 初始化属性点和技能点的奖励
+	        int32 AttributePointsReward = 0;
+	        int32 SpellPointsReward = 0;
+	
+	        // 计算等级提升后应获得的属性点和技能点奖励
+	        for (int32 i = 0; i < NumLevelUps; ++i)
+	        {
+	            SpellPointsReward += IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel + i);
+	            AttributePointsReward += IPlayerInterface::Execute_GetAttributePointsReward(Props.SourceCharacter, CurrentLevel + i);
+	        }
+	        
+	        // 将计算得到的属性点和技能点奖励加到玩家的属性点和技能点上
+	        IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
+	        IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
+	    
+	        // 设置满血和满蓝的标志，表示等级提升后需要恢复全部生命值和魔法值
+	        bTopOffHealth = true;
+	        bTopOffMana = true;
+	        
+	        // 执行等级提升的相关操作
+	        IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
+	    }
+	    
+	    // 将即将获得的经验值加到玩家的经验值上
+	    IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
+	}
 }
 
 void UAureAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
@@ -400,11 +477,6 @@ void UAureAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 	    Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
 	    Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
 	}
-	// if(Data.EvaluatedData.Attribute == GetIncomingXPAttribute())  
-	// {
-	// 	UE_LOG(LogAure, Log, TEXT("获取传入经验值：%f"), GetIncomingXP());
-	// 	//SetIncomingXP(0);
-	// }
 }
 
 void UAureAttributeSet::ShowFloatingText(const FEffectProperties& Props, const float Damage, bool IsBlockedHit, bool IsCriticalHit)

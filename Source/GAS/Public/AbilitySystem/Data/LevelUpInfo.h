@@ -17,6 +17,7 @@ struct FAureLevelUpInfo
 	int32 LevelUpRequirement = 1;
 
 	//奖励属性点数
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 AttributePointAward = 1;
 	//奖励技能点数
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -36,5 +37,5 @@ public:
 	TArray<FAureLevelUpInfo> LevelUpInformation;
 
 	//根据XP值，返回对应的等级
-	int32 FindLevelForXP(int32 XP);
+	int32 FindLevelForXP(int32 XP) const;
 };

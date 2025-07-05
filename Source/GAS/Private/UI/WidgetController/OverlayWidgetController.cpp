@@ -111,7 +111,7 @@ void UOverlayWidgetController::OnInitializeStartupAbilities(UAureAbilitySystemCo
 void UOverlayWidgetController::OnXPChanged(int32 NewXP) 
 {
    // 获取玩家升级信息对象
-   ULevelUpInfo* LevelUpInfo = GetAurePS()->LevelUpInfo;
+   const ULevelUpInfo* LevelUpInfo = GetAurePS()->LevelUpInfo;
    // 确保LevelUpInfo不为空，否则抛出异常
    checkf(LevelUpInfo, TEXT("无法查询到等级相关数据，请查看PlayerState是否设置了对应的数据"));
 
