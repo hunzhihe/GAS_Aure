@@ -5,10 +5,13 @@
 
 #include "AbilitySystemComponent.h"
 #include "BlueprintAssetNodeSpawner.h"
+#include "NiagaraComponent.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/Data/LevelUpInfo.h"
+#include "Camera/CameraComponent.h"
 #include "Game/AureGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AurePlayerController.h"
 #include "Player/AurePlayerState.h"
@@ -29,6 +32,24 @@ AAureCharacter::AAureCharacter()
 
 	//设置玩家职业
 	CharacterClass = ECharacterClass::Elementalist;
+
+	//设置相机
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->SetUsingAbsoluteRotation(true);
+	CameraBoom->bDoCollisionTest = false;
+
+	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>("TopDownCameraComponent");
+	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	TopDownCameraComponent->bUsePawnControlRotation = false;
+
+
+	//设置升级特效组件
+	LevelUpNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("LevelUpNiagaraComponent");
+	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent()); 
+	LevelUpNiagaraComponent->bAutoActivate = false;
+
+
 	
 }
 
@@ -67,6 +88,12 @@ void AAureCharacter::AddToXP_Implementation(int32 InXP)
 	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
 	 check(AurePlayerState);
 	 AurePlayerState->AddToXP(InXP);
+}
+
+void AAureCharacter::LevelUp_Implementation()
+{
+	//播放升级特效
+	MulticastLevelUpParticles();
 }
 
 int32 AAureCharacter::GetXP_Implementation() const
@@ -160,4 +187,22 @@ void AAureCharacter::InitAbilityActorInfo()
 
 	//通过GE初始化角色主要属性
 	  InitializeDefaultAttributes();
+}
+
+void AAureCharacter::MulticastLevelUpParticles_Implementation() const
+{
+	// 检查LevelUpNiagaraComponent是否有效，确保组件已经初始化并且没有被销毁
+    if(IsValid(LevelUpNiagaraComponent))
+    {
+    // 获取摄像机的当前位置，用于计算粒子系统的旋转方向
+    const FVector CameraLocation = TopDownCameraComponent->GetComponentLocation();
+    // 获取粒子系统的当前位置，用于计算其相对于摄像机的旋转
+    const FVector NiagaraSystemLocation = LevelUpNiagaraComponent->GetComponentLocation();
+    // 计算摄像机到粒子系统的方向，并将其转换为旋转
+    const FRotator TopCameraRotation = (CameraLocation - NiagaraSystemLocation).Rotation();
+    // 设置粒子系统的旋转，使其面向摄像机
+    LevelUpNiagaraComponent->SetWorldRotation(TopCameraRotation);
+    // 激活粒子系统，使其开始播放效果
+    LevelUpNiagaraComponent->Activate(true);
+    }
 }
