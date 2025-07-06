@@ -15,6 +15,8 @@ class UAbilitySystemComponent;
 
 //该委托用来在蓝图中监听技能信息
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FAureAbilityInfo&, Info);
+// 该委托用来在蓝图中监听属性信息，例如技能点，属性点
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChangedSignature, int32, NewValue);
 
 // 定义一个结构体FWidgetControllerParams，用于存储小部件控制器的参数
 USTRUCT(BlueprintType)

@@ -3,9 +3,11 @@
 
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AureGameplayTags.h"
 #include "AbilitySystem/Ability/AureGameplayAbility.h"
 #include "GAS/AureLogChannels.h"
+#include "Interaction/PlayerInterface.h"
 
 
 void UAureAbilitySystemComponent::AbilityActorInfoSet()
@@ -153,6 +155,39 @@ FGameplayTag UAureAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbi
 	}
 	// 如果没有找到匹配的标签，则返回一个空的游戏标签
 	return FGameplayTag();
+}
+
+void UAureAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	//判断Avatar是否基础角色接口
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+		//是否有用于可分配点数
+		if (IPlayerInterface::Execute_GetAttributePoints(GetAvatarActor())>0)
+		{
+			//调用服务器升级属性函数
+			ServerUpgradeAttribute(AttributeTag);
+		}
+	}
+}
+
+void UAureAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGameplayTag& AttributeTag)
+{
+	
+	// 初始化Gameplay事件数据Payload
+	FGameplayEventData Payload;
+	Payload.EventTag = AttributeTag; // 设置事件标签为AttributeTag
+	Payload.EventMagnitude = 1.f; // 设置事件幅度为1.0
+	
+	// 向AvatarActor发送Gameplay事件
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActor(), AttributeTag, Payload);
+	
+	// 检查AvatarActor是否实现了UPlayerInterface
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+	    // 调用UPlayerInterface的AddToAttributePoints方法减少属性点
+	    IPlayerInterface::Execute_AddToAttributePoints(GetAvatarActor(), -1);
+	}
 }
 
 void UAureAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,

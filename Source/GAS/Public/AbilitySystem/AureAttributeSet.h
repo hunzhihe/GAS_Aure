@@ -296,6 +296,7 @@ private:
     // 发送XP事件
 	void SendXPEvent(const FEffectProperties& Props);
 
+	// 是否需要将生命值和法力值回满
 	bool bTopOffHealth = false;
 	bool bTopOffMana = false;
 };

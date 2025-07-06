@@ -142,13 +142,9 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	}
 	if (Data.EvaluatedData.Attribute == GetIncomingXPAttribute())
 	{
-		 //const float LocalIncomingXP = GetIncomingXP();
-		 //SetIncomingXP(0);
-		 // if(Props.SourceCharacter->Implements<UPlayerInterface>())
-		 // {
-		 // 	IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
-		 // }
+		
 		UE_LOG(LogAure, Log, TEXT("获取传入经验值：%f"), GetIncomingXP());
+		
 		HandleIncomingXP(Props);
 	}
 }

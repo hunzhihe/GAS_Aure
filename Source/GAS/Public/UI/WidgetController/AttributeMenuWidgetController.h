@@ -34,7 +34,14 @@ public:
 	// 用于当属性信息发生变化时通知其他系统或组件
 	UPROPERTY(BlueprintAssignable, Category="GAS|Attributes")
 	FAttributeInfoSignature AttributeInfoDelegate;
-	
+
+	// 在GAS（游戏属性系统）类别下，指定属性点数代理，允许在蓝图中绑定事件
+	UPROPERTY(BlueprintAssignable, Category="GAS|Attributes")
+	FOnPlayerStatChangedSignature AttributePointsChangedDelegate;
+
+    // 升级属性
+	UFUNCTION(BlueprintCallable)
+	void UpgradeAttribute(const FGameplayTag& AttributeTag);
 
 protected:
 

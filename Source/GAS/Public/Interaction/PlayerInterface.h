@@ -66,4 +66,6 @@ public:
 	//等级提升
 	UFUNCTION(BlueprintNativeEvent)
 	void LevelUp();
+
+	
 };

@@ -69,6 +69,13 @@ public:
 	 * @return 返回对应的输入标签
 	 */
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
+
+	//升级属性
+	void UpgradeAttribute(const FGameplayTag& AttributeTag);
+
+	//服务器升级属性
+	UFUNCTION(Server, Reliable)
+	void ServerUpgradeAttribute(const FGameplayTag& AttributeTag);
 	
 protected:                      
 	//委托触发的回调函数

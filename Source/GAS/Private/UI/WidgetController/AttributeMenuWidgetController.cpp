@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AureGameplayTags.h"
+#include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/AureAttributeSet.h"
 #include "AbilitySystem/Data/AttributeInfo.h"
 #include "Player/AurePlayerState.h"
@@ -27,6 +28,14 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
        );
     }
 
+	// 为玩家属性点数变化事件添加一个Lambda处理函数
+	GetAurePS()->OnAttributePointsChangedDelegate.AddLambda(
+		[this](int32 Points)
+		{
+			AttributePointsChangedDelegate.Broadcast(Points);
+		}
+	);
+
 }
 
 void UAttributeMenuWidgetController::BroadcastInitialValues()
@@ -42,11 +51,20 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
        // 对每一对标签和属性值，广播属性信息
        BroadcastAttributeInfo(Pair.Key, Pair.Value());
      }
-	
+
+	// 将玩家属性点数初始化并广播
+	AttributePointsChangedDelegate.Broadcast(GetAurePS()->GetAttributePoints());
+}
+
+void UAttributeMenuWidgetController::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	// 将玩家属性点数减少并升级属性
+	UAureAbilitySystemComponent* AureASC = CastChecked<UAureAbilitySystemComponent>(AbilitySystemComponent);
+	AureASC->UpgradeAttribute(AttributeTag);
 }
 
 void UAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag& AttributeTag,
-	const FGameplayAttribute& Attribute) const
+                                                            const FGameplayAttribute& Attribute) const
 {
 	FAureAttributeInfo Info = AttributeInfo->FindAttributeInfoForTag(AttributeTag);
 	Info.AttributeValue = Attribute.GetNumericValue(AttributeSet);
