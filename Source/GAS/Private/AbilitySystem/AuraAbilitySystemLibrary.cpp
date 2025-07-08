@@ -89,8 +89,26 @@ UAttributeMenuWidgetController* UAuraAbilitySystemLibrary::GetAttributeMenuWidge
 	return nullptr;
 }
 
+USpellMenuWidgetController* UAuraAbilitySystemLibrary::GetSpellMenuWidgetController(
+	const UObject* WorldContextObject)
+{
+	// 创建一个FWidgetControllerParams类型的对象WCParams，用于存储小部件控制器的参数
+	// 获取AuraHUD对象，用于获取属性菜单小部件控制器
+	FWidgetControllerParams WCParams;
+	AAureHUD* AuraHUD = nullptr;
+	
+	// 调用MakeWidgetControllerParams函数，根据WorldContextObject生成小部件控制器的参数
+	// 如果函数返回true，表示成功生成了控制器参数并且获取了有效的AuraHUD对象
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, AuraHUD))
+	{
+		return AuraHUD->GetSpellMenuWidgetController(WCParams);
+	}
+
+	return nullptr;
+}
+
 void UAuraAbilitySystemLibrary::InitializeDefaultAttributes(const UObject* WorldContextObject,
-	ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC)
+                                                            ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC)
 {
 	//获取到当前关卡的GameMode实例
 	const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
@@ -178,6 +196,16 @@ void UAuraAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContext
 	    }
 	}
 	
+}
+
+UAbilityInfo* UAuraAbilitySystemLibrary::GetAbilityInfo(const UObject* WorldContextObject)
+{
+	//获取到当前关卡的GameMode实例
+	const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if(GameMode == nullptr) return nullptr;
+
+	//返回关卡的角色的配置
+	return  GameMode->AbilityInfo;
 }
 
 bool UAuraAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)

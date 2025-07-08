@@ -5,7 +5,9 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AureGameplayTags.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/Ability/AureGameplayAbility.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 #include "GAS/AureLogChannels.h"
 #include "Interaction/PlayerInterface.h"
 
@@ -24,7 +26,7 @@ void UAureAbilitySystemComponent::OnRep_ActivateAbilities()
 	if(!bStartupAbilitiesGiven)
 	{
 		bStartupAbilitiesGiven = true;
-		AbilitiesGivenDelegate.Broadcast(this);
+		AbilitiesGivenDelegate.Broadcast();
 	}
 }
 
@@ -41,6 +43,7 @@ void UAureAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 		{
 		    // 添加启动输入标签到能力规范的动态源标签中
 		    AbilitySpec.GetDynamicSpecSourceTags().AddTag(AuraAbility->StartupInputTag);
+			AbilitySpec.GetDynamicSpecSourceTags().AddTag(FAureGameplayTags::Get().Abilities_Status_Equipped);
 			
 		    // 授予该能力
 		    GiveAbility(AbilitySpec);
@@ -48,7 +51,7 @@ void UAureAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 	}
 	//技能初始化完成，并广播
 	bStartupAbilitiesGiven = true;
-	AbilitiesGivenDelegate.Broadcast(this);
+	AbilitiesGivenDelegate.Broadcast();
 }
 
 void UAureAbilitySystemComponent::AddCharacterPassiveAbilities(
@@ -57,6 +60,7 @@ void UAureAbilitySystemComponent::AddCharacterPassiveAbilities(
 	for(const TSubclassOf<UGameplayAbility> AbilityClass : StartupPassiveAbilities)
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		
 		GiveAbilityAndActivateOnce(AbilitySpec); //应用技能并激活一次
 	}
 }
@@ -157,6 +161,74 @@ FGameplayTag UAureAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbi
 	return FGameplayTag();
 }
 
+FGameplayTag UAureAbilitySystemComponent::GetStatusFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	for (FGameplayTag StatusTag : AbilitySpec.GetDynamicSpecSourceTags())
+	{
+		if (StatusTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Abilities.Status"))))
+		{
+			return StatusTag;
+		}
+	}
+	return FGameplayTag();
+}
+
+FGameplayAbilitySpec* UAureAbilitySystemComponent::GetSpecFromAbilityTag(const FGameplayTag& AbilityTag)
+{
+	// 使用适用域锁将此作用域this的内容锁定（无法修改），在遍历结束时解锁，保证线程安全
+	FScopedAbilityListLock ActiveScopeLoc(*this);
+	
+	// 遍历所有可激活的能力规格
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+	    // 遍历当前能力规格的所有标签
+	    for (FGameplayTag Tag : AbilitySpec.Ability.Get()->AbilityTags)
+	    {
+	        // 检查当前标签是否与指定的能力标签匹配
+	        if (Tag.MatchesTag(AbilityTag))
+	        {
+	            // 如果匹配，则返回该能力规格的指针
+	            return &AbilitySpec;
+	        }
+	    }
+	}
+	// 如果没有找到匹配的能力标签，则返回空指针
+	return nullptr;
+}
+
+void UAureAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
+{
+
+	// 获取技能信息
+	UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	// 遍历角色的技能信息列表
+	for (const FAureAbilityInfo& Info : AbilityInfo->AbilityInformation)
+	{
+	    // 如果技能标签无效，则跳过当前技能
+	    if (!Info.AbilityTag.IsValid()) continue;
+	    
+	    // 如果玩家等级未达到技能要求的等级，则跳过当前技能
+	    if (Level < Info.LevelRequirement) continue;
+	
+	    // 检查当前技能是否已经具有规格（Spec）信息
+	    if (GetSpecFromAbilityTag(Info.AbilityTag) == nullptr)
+	    {
+	        // 创建一个新的技能规格对象，初始化技能和等级
+	        FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Info.Ability, 1);
+	        
+	        // 为技能规格添加动态源标签，表明该技能处于可使用状态
+	        AbilitySpec.GetDynamicSpecSourceTags().AddTag(FAureGameplayTags::Get().Abilities_Status_Eligible);
+	        
+	        // 授予玩家该技能
+	        GiveAbility(AbilitySpec);
+	        
+	        // 标记技能规格为脏，以便于后续更新或同步
+	        MarkAbilitySpecDirty(AbilitySpec);
+	    	ClientUpdateAbilityStatus(Info.AbilityTag, FAureGameplayTags::Get().Abilities_Status_Eligible);
+	    }
+	}
+}
+
 void UAureAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
 {
 	//判断Avatar是否基础角色接口
@@ -169,6 +241,12 @@ void UAureAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& Attribute
 			ServerUpgradeAttribute(AttributeTag);
 		}
 	}
+}
+
+void UAureAbilitySystemComponent::ClientUpdateAbilityStatus_Implementation(const FGameplayTag& AbilityTag,
+	const FGameplayTag& StatusTag)
+{
+	AbilityStatusChangedDelegate.Broadcast(AbilityTag, StatusTag);
 }
 
 void UAureAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGameplayTag& AttributeTag)

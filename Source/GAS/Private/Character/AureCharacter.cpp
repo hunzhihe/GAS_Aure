@@ -129,6 +129,11 @@ void AAureCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel)
 	AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>();
 	check(AurePlayerState);
 	AurePlayerState->AddToLevel(InPlayerLevel);
+
+	if (UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		AureASC->UpdateAbilityStatuses(AurePlayerState->GetPlayerLevel());
+	}
 }
 
 void AAureCharacter::AddToAttributePoints_Implementation(int32 InAttributePoints)

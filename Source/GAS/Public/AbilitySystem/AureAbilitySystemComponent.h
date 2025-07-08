@@ -11,9 +11,10 @@
 
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* AssetTags */)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/);
 
 //技能初始化应用后的回调委托
-DECLARE_MULTICAST_DELEGATE_OneParam(FAbilitiesGiven,UAureAbilitySystemComponent*)
+DECLARE_MULTICAST_DELEGATE(FAbilitiesGiven)
 //单播委托，只能绑定一个回调函数
 DECLARE_DELEGATE_OneParam(FForEachAbility, const FGameplayAbilitySpec&)
 /**
@@ -35,6 +36,9 @@ public:
 
 	//技能初始化应用后的回调委托
 	FAbilitiesGiven AbilitiesGivenDelegate;
+
+	//技能状态改变的回调委托
+	FAbilityStatusChanged AbilityStatusChangedDelegate;
 
 
 	//添加角色技能
@@ -61,7 +65,6 @@ public:
 	 * @return 返回对应的能力标签
 	 */
 	static FGameplayTag GetAbilityTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
-	
 	/**
 	 * 从能力规格中获取输入标签
 	 * 
@@ -69,6 +72,14 @@ public:
 	 * @return 返回对应的输入标签
 	 */
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
+	//获取技能状态（锁定，待解锁，已解锁，已装备）标签
+	static FGameplayTag GetStatusFromSpec(const FGameplayAbilitySpec& AbilitySpec);
+    //通过技能标签获取技能实例
+	FGameplayAbilitySpec* GetSpecFromAbilityTag(const FGameplayTag& AbilityTag);
+
+	//根据角色等级更新技能数据状态
+	void UpdateAbilityStatuses(int32 Level);
+	
 
 	//升级属性
 	void UpgradeAttribute(const FGameplayTag& AttributeTag);
@@ -82,5 +93,8 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientEffectApplied(UAbilitySystemComponent* AbilitySystemComponent,
 		const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle);
+    //技能状态改变的回调函数
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAbilityStatus(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag);
 	
 };

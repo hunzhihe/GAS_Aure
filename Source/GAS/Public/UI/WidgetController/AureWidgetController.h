@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 #include "UObject/NoExportTypes.h"
 #include "AureWidgetController.generated.h"
 
@@ -71,7 +72,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
 	FAbilityInfoSignature AbilityInfoDelegate;
 
-
+    //广播技能信息
+	void BroadcastAbilityInfo();
+	
 // 用于UI控制器的属性，仅在蓝图中可读
 protected:
 	// 存储玩家控制器的指针，允许UI访问玩家控制器的相关信息
@@ -102,7 +105,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
 	TObjectPtr<UAureAttributeSet> AureAttributeSet;
 
-
+	//技能的表格数据
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
+	
 	AAurePlayerController* GetAurePC();
 	AAurePlayerState* GetAurePS() ;
 	UAureAbilitySystemComponent* GetAureASC();

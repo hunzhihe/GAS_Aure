@@ -25,6 +25,37 @@ void UAureWidgetController::BindCallbacksToDependencies()
 {
 }
 
+void UAureWidgetController::BroadcastAbilityInfo()
+{
+	//获取当前技能初始化是否完成
+	if (!GetAureASC()->bStartupAbilitiesGiven)
+	{
+		return;
+	}
+
+	//创建一个单播委托
+	FForEachAbility BroadcastDelegate;
+
+	//绑定回调匿名函数，委托广播时将会触发内部逻辑
+	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& AbilitySpec)
+	{
+		//获取技能实例的标签，并通过标签获取技能数据
+		FAureAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(UAureAbilitySystemComponent::GetAbilityTagFromSpec(AbilitySpec));
+
+		//获取技能的输入标签
+		Info.InputTag = UAureAbilitySystemComponent::GetInputTagFromSpec(AbilitySpec);
+
+		//获取技能的状态标签
+		Info.StatusTag = UAureAbilitySystemComponent::GetStatusFromSpec(AbilitySpec);
+
+		AbilityInfoDelegate.Broadcast(Info);
+	}
+		);
+
+	//遍历技能并触发委托回调
+	GetAureASC()->ForEachAbility(BroadcastDelegate);
+}
+
 AAurePlayerController* UAureWidgetController::GetAurePC()
 {
 	if (AurePlayerController == nullptr)

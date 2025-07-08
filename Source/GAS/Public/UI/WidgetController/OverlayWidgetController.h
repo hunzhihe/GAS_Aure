@@ -79,12 +79,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="GAS|Level")
 	FOnLevelChangedSignature OnPlayerLevelChangedDelegate;
 
-	//技能的表格数据
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget Data")
-	TObjectPtr<UAbilityInfo> AbilityInfo;
+
 
 	//技能初始化应用后的回调
-	void OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const;
+	//void OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const;
 
 	//经验变动后的回调
 	void OnXPChanged(int32 NewXP) ;

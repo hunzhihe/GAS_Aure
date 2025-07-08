@@ -45,20 +45,20 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		GetAureAS()->GetMaxManaAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data){OnMaxManaChanged.Broadcast(Data.NewValue);});
 
-	if (UAureAbilitySystemComponent* AureASC = GetAureASC())
+	if (GetAureASC())
 	{
-		if (AureASC->bStartupAbilitiesGiven)
+		if (GetAureASC()->bStartupAbilitiesGiven)
 		{
 			//如果执行到此处时，技能的初始化工作已经完成，则直接调用初始化回调
-			OnInitializeStartupAbilities(AureASC);
+			BroadcastAbilityInfo();
 		}
 		else
 		{
 			//如果执行到此处，技能初始化还未未完成，将通过绑定委托，监听广播的形式触发初始化完成回调
-			AureASC->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+			GetAureASC()->AbilitiesGivenDelegate.AddUObject(this, &ThisClass::BroadcastAbilityInfo);
 		}
 		
-		AureASC->EffectAssetTags.AddLambda(
+		GetAureASC()->EffectAssetTags.AddLambda(
 			[this](const FGameplayTagContainer& Container)
 		{
 
@@ -80,33 +80,33 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	}
 }
 
-void UOverlayWidgetController::OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const
-{
-	//获取当前技能初始化是否完成
-	if (!AureASC->bStartupAbilitiesGiven)
-	{
-		return;
-	}
-
-	//创建一个单播委托
-	FForEachAbility BroadcastDelegate;
-
-	//绑定回调匿名函数，委托广播时将会触发内部逻辑
-	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& AbilitySpec)
-	{
-		//获取技能实例的标签，并通过标签获取技能数据
-		FAureAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(UAureAbilitySystemComponent::GetAbilityTagFromSpec(AbilitySpec));
-
-		//获取技能的输入标签
-		Info.InputTag = UAureAbilitySystemComponent::GetInputTagFromSpec(AbilitySpec);
-
-		AbilityInfoDelegate.Broadcast(Info);
-	}
-		);
-
-	//遍历技能并触发委托回调
-	AureAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
-}
+// void UOverlayWidgetController::OnInitializeStartupAbilities(UAureAbilitySystemComponent* AureASC) const
+// {
+// 	//获取当前技能初始化是否完成
+// 	if (!AureASC->bStartupAbilitiesGiven)
+// 	{
+// 		return;
+// 	}
+//
+// 	//创建一个单播委托
+// 	FForEachAbility BroadcastDelegate;
+//
+// 	//绑定回调匿名函数，委托广播时将会触发内部逻辑
+// 	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& AbilitySpec)
+// 	{
+// 		//获取技能实例的标签，并通过标签获取技能数据
+// 		FAureAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(UAureAbilitySystemComponent::GetAbilityTagFromSpec(AbilitySpec));
+//
+// 		//获取技能的输入标签
+// 		Info.InputTag = UAureAbilitySystemComponent::GetInputTagFromSpec(AbilitySpec);
+//
+// 		AbilityInfoDelegate.Broadcast(Info);
+// 	}
+// 		);
+//
+// 	//遍历技能并触发委托回调
+// 	AureAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
+// }
 
 void UOverlayWidgetController::OnXPChanged(int32 NewXP) 
 {

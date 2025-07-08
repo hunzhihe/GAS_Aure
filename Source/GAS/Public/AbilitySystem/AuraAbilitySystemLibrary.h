@@ -6,6 +6,7 @@
 #include "AureAbilityTypes.h"
 #include "GameplayEffectTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "UI/WidgetController/SpellMenuWidgetController.h"
 #include "AuraAbilitySystemLibrary.generated.h"
 
 class UCharacterClassInfo;
@@ -45,15 +46,20 @@ public:
 	// 此函数用于在蓝图中以纯函数的形式获取UOverlayWidgetController实例
 	// 参数: WorldContextObject - 用于获取控制器的世界上下文对象
 	// 返回值: 返回UOverlayWidgetController的实例，用于控制覆盖小部件的行为和属性
-	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|WidgetController")
+	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|WidgetController",meta = (DefaultToSelf = "WorldContextObject"))
 	static UOverlayWidgetController* GetOverlayWidgetController(const UObject* WorldContextObject);
 	
 	// 从给定的世界上下文对象中获取属性菜单小部件控制器
 	// 此函数用于在蓝图中以纯函数的形式获取UAttributeMenuWidgetController实例
 	// 参数: WorldContextObject - 用于获取控制器的世界上下文对象
 	// 返回值: 返回UAttributeMenuWidgetController的实例，用于控制属性菜单小部件的行为和属性
-	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|WidgetController")
+	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|WidgetController",meta = (DefaultToSelf = "WorldContextObject"))
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+
+	//获取属性面板的控制器
+	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|WidgetController",meta = (DefaultToSelf = "WorldContextObject"))
+	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
+	
 	
 
 	/*--------角色类默认属性--------*/
@@ -68,6 +74,10 @@ public:
 	//初始化敌人角色技能
 	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|CharacterClassDefaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC,ECharacterClass CharacterClass);
+
+	//获取玩家角色技能配置数据
+	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|CharacterClassDefaults")
+	static UAbilityInfo* GetAbilityInfo(const UObject* WorldContextObject);
 
 	/*--------游戏效果上下文获取--------*/
 	//是否格挡
