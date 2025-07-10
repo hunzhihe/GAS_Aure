@@ -74,6 +74,13 @@ public:
 
     //广播技能信息
 	void BroadcastAbilityInfo();
+
+	//监听技能装配后的处理
+	void OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const;
+
+    //清除全部委托绑定
+	UFUNCTION(BlueprintCallable)
+	virtual void ClearAllDelegate();
 	
 // 用于UI控制器的属性，仅在蓝图中可读
 protected:

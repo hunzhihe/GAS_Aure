@@ -63,6 +63,14 @@ void UAttributeMenuWidgetController::UpgradeAttribute(const FGameplayTag& Attrib
 	AureASC->UpgradeAttribute(AttributeTag);
 }
 
+void UAttributeMenuWidgetController::ClearAllDelegate()
+{
+	Super::ClearAllDelegate();
+
+	AttributeInfoDelegate.Clear();
+	AttributePointsChangedDelegate.Clear();
+}
+
 void UAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag& AttributeTag,
                                                             const FGameplayAttribute& Attribute) const
 {

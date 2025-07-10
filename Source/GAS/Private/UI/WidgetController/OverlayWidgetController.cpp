@@ -44,7 +44,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		GetAureAS()->GetMaxManaAttribute()).AddLambda(
 			[this](const FOnAttributeChangeData& Data){OnMaxManaChanged.Broadcast(Data.NewValue);});
-
+	
 	if (GetAureASC())
 	{
 		if (GetAureASC()->bStartupAbilitiesGiven)

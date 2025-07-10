@@ -32,6 +32,14 @@ struct FAureAbilityInfo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayTag CooldownTag = FGameplayTag();
 
+	//技能类型(主动，被动)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag AbilityType = FGameplayTag();
+
+	//当前技能等级
+	UPROPERTY(BlueprintReadOnly)
+	int32 Level = 0;
+
 	//技能图标
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<const UTexture2D> Icon = nullptr;

@@ -8,8 +8,10 @@
 #include "SpellMenuWidgetController.generated.h"
 
 //在技能面板选中的技能的标签结构体
+USTRUCT(BlueprintType)
 struct FSelectedAbility
 {
+	GENERATED_BODY()
 	//技能标签
 	FGameplayTag Ability = FGameplayTag();
 	//技能状态标签
@@ -63,6 +65,16 @@ public:
 	//降级按钮调用函数
 	UFUNCTION(BlueprintCallable)
 	void DemotionPointButtonPressed(const FGameplayTag& AbilityTag);
+
+	//再次点击，取消按钮选中处理
+	UFUNCTION(BlueprintCallable)
+	void GlobeDeselect();
+
+	//装配按钮点击事件
+	UFUNCTION(BlueprintCallable)
+	void EquipButtonPressed(const FGameplayTag& SlotTag, const FGameplayTag& AbilityType);
+
+	virtual void ClearAllDelegate() override;
 private:
 
 	//通过技能状态标签和可分配技能点数来设置技能是否可以装配，技能是否可以升级

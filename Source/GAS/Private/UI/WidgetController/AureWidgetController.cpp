@@ -3,6 +3,7 @@
 
 #include "UI/WidgetController/AureWidgetController.h"
 
+#include "AureGameplayTags.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/AureAttributeSet.h"
 #include "Player/AurePlayerController.h"
@@ -54,6 +55,30 @@ void UAureWidgetController::BroadcastAbilityInfo()
 
 	//遍历技能并触发委托回调
 	GetAureASC()->ForEachAbility(BroadcastDelegate);
+}
+
+void UAureWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status,
+	const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const
+{
+	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+
+	//清除旧插槽的数据
+	FAureAbilityInfo LastSlotInfo;
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;
+	LastSlotInfo.InputTag = PreviousSlot;
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);
+
+	//更新新插槽的数据
+	FAureAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	Info.StatusTag = Status;
+	Info.InputTag = Slot;
+	AbilityInfoDelegate.Broadcast(Info);
+}
+
+void UAureWidgetController::ClearAllDelegate()
+{
+	AbilityInfoDelegate.Clear();
 }
 
 AAurePlayerController* UAureWidgetController::GetAurePC()

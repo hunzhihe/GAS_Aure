@@ -50,6 +50,5 @@ void SpawnProjectile(const FVector& ProjectileTargetLocation,
 	//火球类
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AAureProjectile> ProjectileClass;
-
 	
 };

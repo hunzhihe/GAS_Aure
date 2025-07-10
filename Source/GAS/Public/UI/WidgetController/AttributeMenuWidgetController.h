@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpgradeAttribute(const FGameplayTag& AttributeTag);
 
+	
+	virtual void ClearAllDelegate()  override;
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly)

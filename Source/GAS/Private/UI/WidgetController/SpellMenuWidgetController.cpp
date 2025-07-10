@@ -9,6 +9,9 @@
 
 void USpellMenuWidgetController::BroadcastInitialValues()
 {
+
+	
+	
 	BroadcastAbilityInfo();
 
 	//广播所拥有的技能点
@@ -42,6 +45,9 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 	    }
 	});
 
+    //监听技能装配的回调
+	GetAureASC()->AbilityEquippedDelegate.AddUObject(this, &USpellMenuWidgetController::OnAbilityEquipped);
+	
 	//绑定技能点变化回调
 	GetAurePS()->OnSpellPointsChangedDelegate.AddLambda([this](int32 NewSpellPoints)
 	{
@@ -145,6 +151,47 @@ void USpellMenuWidgetController::DemotionPointButtonPressed(const FGameplayTag& 
 		//调用ASC降低技能函数
 		GetAureASC()->ServerDemotionSpellPoint(AbilityTag);
 	}
+}
+
+void USpellMenuWidgetController::GlobeDeselect()
+{
+	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+	SelectedAbility.Ability = GameplayTags.Abilities_None;
+	SelectedAbility.AbilityStatus = GameplayTags.Abilities_Status_Locked;
+	SelectedAbility.Level = 0;
+
+	SpellDescriptionSignature.Broadcast(FString(), FString());
+}
+
+void USpellMenuWidgetController::EquipButtonPressed(const FGameplayTag& SlotTag, const FGameplayTag& AbilityType)
+{
+	const FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+
+	//获取技能的类型
+	const FGameplayTag& SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
+
+	// 检查技能类型是否匹配
+	if (!SelectedAbilityType.MatchesTagExact(AbilityType)) return;
+
+	//获取技能的驶入标签
+	FGameplayAbilitySpec* AbilitySpec = GetAureASC()->GetSpecFromAbilityTag(SelectedAbility.Ability);
+	const FGameplayTag& SelectedAbilityInputTag = GetAureASC()->GetInputTagFromSpec(*AbilitySpec);
+	//如果当前技能输入和插槽标签相同，证明已经装配，不需要再处理
+	if (SelectedAbilityInputTag.MatchesTagExact(SlotTag)) return;
+
+	
+	//调用装配技能函数，进行处理
+	GetAureASC()->ServerEquipAbility(SelectedAbility.Ability, SlotTag);
+}
+
+void USpellMenuWidgetController::ClearAllDelegate()
+{
+	Super::ClearAllDelegate();
+	SpellPointChanged.Clear();
+	SpellGlobeSelectedSignature.Clear();
+	SpellDescriptionSignature.Clear();
+	SelectedAbility = {FAureGameplayTags::Get().Abilities_None,FAureGameplayTags::Get().Abilities_Status_Locked};
+	
 }
 
 void USpellMenuWidgetController::ShouldEnableButtons(const FGameplayTag& AbilityStatus, bool HasSpellPoints,bool& bShouldEnableSpellPoints,

@@ -12,6 +12,7 @@
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* AssetTags */)
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/,int32);
+DECLARE_MULTICAST_DELEGATE_FourParams(FAbilityEquipped, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/, const FGameplayTag& /*输入标签*/, const FGameplayTag& /*上一个输入标签*/);
 
 //技能初始化应用后的回调委托
 DECLARE_MULTICAST_DELEGATE(FAbilitiesGiven)
@@ -40,6 +41,8 @@ public:
 	//技能状态改变的回调委托
 	FAbilityStatusChanged AbilityStatusChangedDelegate;
 
+	//技能装配插槽改变的回调委托
+	FAbilityEquipped AbilityEquippedDelegate;
 
 	//添加角色技能
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
@@ -96,6 +99,24 @@ public:
 
 	//通过技能标签获取技能描述
 	bool GetDescriptionByAbilityTag(const FGameplayTag& AbilityTag, FString& OutDescription, FString& OutNextLevelDescription);
+
+
+	//服务器处理技能装配，传入技能标签和装配的插槽技能标签
+	UFUNCTION(Server, Reliable)
+	void ServerEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& Slot);
+
+	//客户端处理技能装配其
+	UFUNCTION(Client, Reliable)
+	void ClientEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot);
+
+	//清除技能装配插槽中的技能
+	void ClearSlot(FGameplayAbilitySpec* Spec);
+
+	//根据输入标签，清除技能装配插槽的技能
+	void ClearAbilitiesOfSlot(const FGameplayTag& Slot);
+
+	//判断当前技能实例是否处于目标技能装配插槽
+	static bool AbilityHasSlot(FGameplayAbilitySpec* Spec, const FGameplayTag& Slot);
 	
 protected:                      
 	//委托触发的回调函数

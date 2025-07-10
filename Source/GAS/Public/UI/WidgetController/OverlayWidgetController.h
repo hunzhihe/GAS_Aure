@@ -86,6 +86,8 @@ public:
 
 	//经验变动后的回调
 	void OnXPChanged(int32 NewXP) ;
+
+
 	
 protected:
 	// void HealthChanged(const FOnAttributeChangeData& Data) const;
