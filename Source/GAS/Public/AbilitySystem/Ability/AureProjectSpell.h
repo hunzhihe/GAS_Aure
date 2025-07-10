@@ -15,6 +15,12 @@ UCLASS()
 class GAS_API UAureProjectSpell : public UAureDamageGameplayAbility
 {
 	GENERATED_BODY()
+
+public:
+	virtual FString GetDescription(int32  Level) override;
+	virtual FString GetNextLevelDescription(int32 Level) override;
+
+	
 protected:
 /**
  * 激活游戏玩法能力的虚拟函数

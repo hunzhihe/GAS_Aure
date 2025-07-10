@@ -11,7 +11,7 @@
 
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* AssetTags */)
-DECLARE_MULTICAST_DELEGATE_TwoParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/,int32);
 
 //技能初始化应用后的回调委托
 DECLARE_MULTICAST_DELEGATE(FAbilitiesGiven)
@@ -87,6 +87,15 @@ public:
 	//服务器升级属性
 	UFUNCTION(Server, Reliable)
 	void ServerUpgradeAttribute(const FGameplayTag& AttributeTag);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSpendSpellPoint(const FGameplayTag& AbilityTag);
+
+	UFUNCTION(Server, Reliable)
+	void ServerDemotionSpellPoint(const FGameplayTag& AbilityTag);
+
+	//通过技能标签获取技能描述
+	bool GetDescriptionByAbilityTag(const FGameplayTag& AbilityTag, FString& OutDescription, FString& OutNextLevelDescription);
 	
 protected:                      
 	//委托触发的回调函数
@@ -95,6 +104,8 @@ protected:
 		const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle);
     //技能状态改变的回调函数
 	UFUNCTION(Client, Reliable)
-	void ClientUpdateAbilityStatus(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag);
+	void ClientUpdateAbilityStatus(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag, int32 Level);
+
+
 	
 };

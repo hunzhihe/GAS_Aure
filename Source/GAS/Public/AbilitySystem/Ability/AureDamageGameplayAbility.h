@@ -36,6 +36,7 @@ class GAS_API UAureDamageGameplayAbility : public UAureGameplayAbility
 	static FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages);
 	
 
+	float GetDamageByDamageType(float InLevel,const FGameplayTag& DamageType);
 	
 protected:
 

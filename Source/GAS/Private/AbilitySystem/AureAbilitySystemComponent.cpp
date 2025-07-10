@@ -214,7 +214,7 @@ void UAureAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
 	    if (GetSpecFromAbilityTag(Info.AbilityTag) == nullptr)
 	    {
 	        // 创建一个新的技能规格对象，初始化技能和等级
-	        FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Info.Ability, 1);
+	        FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Info.Ability, 0);
 	        
 	        // 为技能规格添加动态源标签，表明该技能处于可使用状态
 	        AbilitySpec.GetDynamicSpecSourceTags().AddTag(FAureGameplayTags::Get().Abilities_Status_Eligible);
@@ -224,7 +224,7 @@ void UAureAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
 	        
 	        // 标记技能规格为脏，以便于后续更新或同步
 	        MarkAbilitySpecDirty(AbilitySpec);
-	    	ClientUpdateAbilityStatus(Info.AbilityTag, FAureGameplayTags::Get().Abilities_Status_Eligible);
+	    	ClientUpdateAbilityStatus(Info.AbilityTag, FAureGameplayTags::Get().Abilities_Status_Eligible,AbilitySpec.Level);
 	    }
 	}
 }
@@ -243,10 +243,93 @@ void UAureAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& Attribute
 	}
 }
 
-void UAureAbilitySystemComponent::ClientUpdateAbilityStatus_Implementation(const FGameplayTag& AbilityTag,
-	const FGameplayTag& StatusTag)
+bool UAureAbilitySystemComponent::GetDescriptionByAbilityTag(const FGameplayTag& AbilityTag, FString& OutDescription,
+	FString& OutNextLevelDescription)
 {
-	AbilityStatusChangedDelegate.Broadcast(AbilityTag, StatusTag);
+	//如果当前技能处于锁定状态，将无法获取到对应的技能描述
+	if (FGameplayAbilitySpec* AureAbilitySpec = GetSpecFromAbilityTag(AbilityTag))
+	{
+		if (UAureGameplayAbility* AureAbility = Cast<UAureGameplayAbility>(AureAbilitySpec->Ability))
+		{
+			OutDescription = AureAbility->GetDescription(AureAbilitySpec->Level);
+			OutNextLevelDescription = AureAbility->GetNextLevelDescription(AureAbilitySpec->Level+1);
+			return true;
+		}
+	}
+	//如果技能是锁定状态，将显示锁定状态的技能描述
+	UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	OutDescription =  UAureGameplayAbility::GetLockedDescription(AbilityInfo->FindAbilityInfoForTag(AbilityTag).LevelRequirement);
+	OutNextLevelDescription = FString();
+	return false;
+}
+
+void UAureAbilitySystemComponent::ServerSpendSpellPoint_Implementation(const FGameplayTag& AbilityTag)
+{
+	//获取到技能实例
+	if (FGameplayAbilitySpec* AbilitySpec = GetSpecFromAbilityTag(AbilityTag))
+	{
+		//减少一个可分配技能点
+		if (GetAvatarActor()->Implements<UPlayerInterface>())
+		{
+			IPlayerInterface::Execute_AddToSpellPoints(GetAvatarActor(), -1);
+		}
+		//获取状态标签
+		FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+		FGameplayTag StatusTag = GetStatusFromSpec(*AbilitySpec);
+		//根据状态标签处理
+		if (StatusTag.MatchesTagExact(GameplayTags.Abilities_Status_Eligible))
+		{
+			//如果技能是可解锁状态，将状态标签从可解锁转换为已解锁
+			AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GameplayTags.Abilities_Status_Eligible);
+			AbilitySpec->GetDynamicSpecSourceTags().AddTag(GameplayTags.Abilities_Status_Unlocked);
+			StatusTag = GameplayTags.Abilities_Status_Unlocked;
+
+			//提升技能等级
+			AbilitySpec->Level += 1;
+		}
+		else if (StatusTag.MatchesTagExact(GameplayTags.Abilities_Status_Equipped)||StatusTag.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
+		{
+			AbilitySpec->Level += 1;
+		}
+		ClientUpdateAbilityStatus(AbilityTag, StatusTag,AbilitySpec->Level);
+	}
+}
+
+void UAureAbilitySystemComponent::ServerDemotionSpellPoint_Implementation(const FGameplayTag& AbilityTag)
+{
+	//获取到技能实例
+	if (FGameplayAbilitySpec* AbilitySpec = GetSpecFromAbilityTag(AbilityTag))
+	{
+		//增加一个可分配的技能点
+		if (GetAvatarActor()->Implements<UPlayerInterface>())
+		{
+			IPlayerInterface::Execute_AddToSpellPoints(GetAvatarActor(), 1);
+		}
+		//获取状态标签
+		FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+		FGameplayTag StatusTag = GetStatusFromSpec(*AbilitySpec);
+
+		if (StatusTag.MatchesTagExact(GameplayTags.Abilities_Status_Equipped) || StatusTag.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
+		{
+			AbilitySpec-> Level -= 1;
+			if (AbilitySpec->Level<1)
+			{
+				//技能小于1级，当前技能将无法装配，直接设置为可解锁状态
+				AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GameplayTags.Abilities_Status_Equipped);
+				AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GameplayTags.Abilities_Status_Unlocked);
+				AbilitySpec->GetDynamicSpecSourceTags().AddTag(GameplayTags.Abilities_Status_Eligible);
+				StatusTag = GameplayTags.Abilities_Status_Eligible;
+			}
+		}
+		ClientUpdateAbilityStatus(AbilityTag, StatusTag,AbilitySpec->Level);
+		MarkAbilitySpecDirty(*AbilitySpec);
+	}
+}
+
+void UAureAbilitySystemComponent::ClientUpdateAbilityStatus_Implementation(const FGameplayTag& AbilityTag,
+                                                                           const FGameplayTag& StatusTag,int32 AbilityLevel)
+{
+	AbilityStatusChangedDelegate.Broadcast(AbilityTag, StatusTag,AbilityLevel);
 }
 
 void UAureAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGameplayTag& AttributeTag)
