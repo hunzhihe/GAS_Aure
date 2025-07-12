@@ -10,7 +10,10 @@
 
 
 class UNiagaraSystem;
+//Actor初始化ASC完成后委托
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*)
+//角色死亡委托
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeath, AActor*, DeadActor);
 
 // 定义一个结构体FTaggedMontage，用于在蓝图中使用
 USTRUCT(BlueprintType)
@@ -105,4 +108,9 @@ public:
 	//获取角色的职业信息
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	ECharacterClass GetCharacterClass();
+
+	//获取ASC注册成功后的委托
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() = 0;
+	//获取死亡委托
+	virtual FOnDeath& GetOnDeathDelegate() = 0; 
 };

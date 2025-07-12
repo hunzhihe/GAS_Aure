@@ -8,7 +8,7 @@
 
 FString UAureGameplayAbility::GetDescription(int32 Level)
 {
-	return FString::Printf(TEXT("%s, <Level>%d</>"), L"默认技能名称 - 火球术火球术火球术火球术", Level);
+	return FString::Printf(TEXT("%s, <Level>%d</>"), L"默认技能名称 - 技能名称火球术", Level);
 }
 
 FString UAureGameplayAbility::GetNextLevelDescription(int32 Level)

@@ -192,6 +192,9 @@ void AAureCharacter::InitAbilityActorInfo()
 
 	//通过GE初始化角色主要属性
 	  InitializeDefaultAttributes();
+
+	//调用ASC广播
+	OnASCRegistered.Broadcast(AbilitySystemComponent);
 }
 
 void AAureCharacter::MulticastLevelUpParticles_Implementation() const

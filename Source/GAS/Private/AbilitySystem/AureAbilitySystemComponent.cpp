@@ -318,32 +318,46 @@ void UAureAbilitySystemComponent::ClientEquipAbility_Implementation(const FGamep
 
 void UAureAbilitySystemComponent::ClearSlot(FGameplayAbilitySpec* Spec)
 {
+	// 获取Spec的输入标签
 	const FGameplayTag Slot = GetInputTagFromSpec(*Spec);
+	
+	// 从Spec的动态规范源标签中移除该输入标签
 	Spec->GetDynamicSpecSourceTags().RemoveTag(Slot);
+	
+	// 标记Spec为脏，以便在后续处理中更新或重新计算
 	MarkAbilitySpecDirty(*Spec);
 }
 
 void UAureAbilitySystemComponent::ClearAbilitiesOfSlot(const FGameplayTag& Slot)
 {
+	// 锁定当前作用域内的所有可激活能力列表，以防止在处理能力时发生并发修改
 	FScopedAbilityListLock ActiveScopeLock(*this);
+	
+	// 遍历所有可激活的能力规格
 	for(FGameplayAbilitySpec& Spec : GetActivatableAbilities())
 	{
-		if(AbilityHasSlot(&Spec, Slot))
-		{
-			ClearSlot(&Spec);
-		}
+	    // 检查当前能力规格是否具有指定的插槽
+	    if(AbilityHasSlot(&Spec, Slot))
+	    {
+	        // 清除能力规格中的指定插槽
+	        ClearSlot(&Spec);
+	    }
 	}
 }
 
 bool UAureAbilitySystemComponent::AbilityHasSlot(FGameplayAbilitySpec* Spec, const FGameplayTag& Slot)
 {
+	// 遍历Spec的动态规范源标签
 	for (FGameplayTag Tag : Spec->GetDynamicSpecSourceTags())
 	{
-		if (Tag.MatchesTagExact(Slot))
-		{
-			return true;
-		}
+	    // 检查当前标签是否与指定的Slot标签精确匹配
+	    if (Tag.MatchesTagExact(Slot))
+	    {
+	        // 如果匹配到相同的标签，返回true
+	        return true;
+	    }
 	}
+	// 如果没有匹配到相同的标签，返回false
 	return false;
 }
 

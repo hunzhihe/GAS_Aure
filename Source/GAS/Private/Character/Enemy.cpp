@@ -170,6 +170,9 @@ void AAureEnemy::InitAbilityActorInfo()
 	//初始化属性
 	InitializeDefaultAttributes();
 
+	//调用ASC广播
+	OnASCRegistered.Broadcast(AbilitySystemComponent);
+
 	//打印生命值查看属性
 	//UE_LOG(LogTemp, Warning, TEXT("%s 的生命值为 %f"), *this->GetName(), Cast<UAureAttributeSet>(AttributeSet)->GetHealth());
 }

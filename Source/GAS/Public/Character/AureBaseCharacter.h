@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "AureBaseCharacter.generated.h"
@@ -40,6 +41,8 @@ public:
 	virtual int32 GetMinionCount_Implementation() override;
 	virtual void IncrementMinionCount_Implementation(const int32 Amount) override;
 	virtual ECharacterClass GetCharacterClass_Implementation() override;
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override;
+	virtual FOnDeath& GetOnDeathDelegate() override;
 	/** end Combat Interface */
 
     // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
@@ -49,9 +52,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TArray<FTaggedMontage> AttackMontages;
+	
 
-
-
+	//ASC注册成功委托
+	FOnASCRegistered OnASCRegistered;
+	//角色死亡后触发的死亡委托
+	FOnDeath OnDeath; 
 	
 
 protected:
@@ -155,6 +161,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
 	/*角色死亡后溶解效果*/
+
+	//火焰负面效果表现组件
+	UPROPERTY(VisibleAnywhere) 
+	TObjectPtr<UDebuffNiagaraComponent> BurnDeBuffComponent;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UNiagaraSystem* BloodEffect;

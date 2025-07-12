@@ -9,9 +9,6 @@
 
 void USpellMenuWidgetController::BroadcastInitialValues()
 {
-
-	
-	
 	BroadcastAbilityInfo();
 
 	//广播所拥有的技能点

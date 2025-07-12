@@ -23,8 +23,13 @@ AAureBaseCharacter::AAureBaseCharacter()
 	Weapon->SetupAttachment(GetMesh(), FName("WeaponHandSocket"));
 	// 设置武器的碰撞模式为"NoCollision"
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
 
+
+	//初始化火焰负面效果组件
+	BurnDeBuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("BurnDeBuffComponent");
+	BurnDeBuffComponent->SetupAttachment(GetRootComponent());
+	BurnDeBuffComponent->DebuffTag = FAureGameplayTags::Get().Debuff_Burn; //设置匹配的负面标签
+	
 }
 
 FVector AAureBaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
@@ -116,6 +121,16 @@ ECharacterClass AAureBaseCharacter::GetCharacterClass_Implementation()
 	return CharacterClass;
 }
 
+FOnASCRegistered& AAureBaseCharacter::GetOnASCRegisteredDelegate()
+{
+	return OnASCRegistered;
+}
+
+FOnDeath& AAureBaseCharacter::GetOnDeathDelegate()
+{
+	return OnDeath;
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 {
@@ -145,6 +160,9 @@ void AAureBaseCharacter::MulticastHandleDeath_Implementation()
 
 	//设置死亡状态
 	bDead = true;
+
+	//触发死亡委托
+	OnDeath.Broadcast(this);
 }
 
 UAbilitySystemComponent* AAureBaseCharacter::GetAbilitySystemComponent() const

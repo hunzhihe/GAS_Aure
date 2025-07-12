@@ -33,7 +33,6 @@ void UAureWidgetController::BroadcastAbilityInfo()
 	{
 		return;
 	}
-
 	//创建一个单播委托
 	FForEachAbility BroadcastDelegate;
 

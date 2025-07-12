@@ -35,7 +35,7 @@ class GAS_API UAureDamageGameplayAbility : public UAureGameplayAbility
 	UFUNCTION(BlueprintPure)
 	static FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages);
 	
-
+    //依据伤害类型获取伤害值
 	float GetDamageByDamageType(float InLevel,const FGameplayTag& DamageType);
 	
 protected:

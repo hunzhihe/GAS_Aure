@@ -17,17 +17,21 @@ FString UAureProjectSpell::GetDescription(int32 Level)
 
 	if (Level == 1)
 	{
-		return FString::Printf(TEXT("<Title>火球术</>\n<Small>等级：1</>\n\n<Default>发射 1 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"), ScaledDamage);
+		return FString::Printf(TEXT(
+			"<Title>火球术</>\n<Small>等级：1</>\n\n<Default>发射 1 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"), ScaledDamage);
 	}
 
-	return FString::Printf(TEXT("<Title>火球术</>\n<Small>等级：%i</>\n\n<Default>发射 %i 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"), Level, FMath::Min(Level, 5), ScaledDamage);
+	return FString::Printf(TEXT("<Title>火球术</>\n<Small>等级：%i</>\n\n<Default>发射 %i 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"),
+		Level,
+		FMath::Min(Level, 5), ScaledDamage);
 	
 }
 
 FString UAureProjectSpell::GetNextLevelDescription(int32 Level)
 {
 	const int32 ScaledDamage = DamageTypes[FAureGameplayTags::Get().Damage_Fire].GetValueAtLevel(Level + 1); //根据等级获取技能伤害
-	return FString::Printf(TEXT("<Title>下一等级</>\n<Small>等级：%i</>\n\n<Default>发射 %i 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"), Level, FMath::Min(Level, 5), ScaledDamage);
+	return FString::Printf(TEXT("<Title>下一等级</>\n<Small>等级：%i</>\n\n<Default>发射 %i 颗火球，在发生撞击时产生爆炸，并造成</> <Damage>%i</> <Default>点火焰伤害，并有一定几率燃烧。</>"),
+		Level, FMath::Min(Level, 5), ScaledDamage);
 	
 }
 

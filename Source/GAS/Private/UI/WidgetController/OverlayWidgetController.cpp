@@ -16,6 +16,7 @@ void UOverlayWidgetController::BroadcastInitialValues()
 	OnManaChanged.Broadcast(GetAureAS()->GetMana());
 	OnMaxManaChanged.Broadcast(GetAureAS()->GetMaxMana());
 	
+	
 }
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
@@ -47,6 +48,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	
 	if (GetAureASC())
 	{
+		GetAureASC()->AbilityEquippedDelegate.AddUObject(this, &UOverlayWidgetController::OnAbilityEquipped);
 		if (GetAureASC()->bStartupAbilitiesGiven)
 		{
 			//如果执行到此处时，技能的初始化工作已经完成，则直接调用初始化回调
