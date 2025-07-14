@@ -19,7 +19,8 @@ class GAS_API UAureProjectSpell : public UAureDamageGameplayAbility
 public:
 	virtual FString GetDescription(int32  Level) override;
 	virtual FString GetNextLevelDescription(int32 Level) override;
-
+	
+	
 	
 protected:
 /**
@@ -50,5 +51,9 @@ void SpawnProjectile(const FVector& ProjectileTargetLocation,
 	//火球类
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AAureProjectile> ProjectileClass;
+
+
+
+
 	
 };

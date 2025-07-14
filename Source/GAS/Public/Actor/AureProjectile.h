@@ -31,6 +31,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
 	FDamageEffectParams DamageEffectParams;
 
+	UPROPERTY() //一个场景组件，用于确定当前投掷物的攻击目标（在没有默认目标时，有默认目标直接设置目标的根组件）
+	TObjectPtr<USceneComponent> HomingTargetSceneComponent;
+
 protected:
 	
 	virtual void BeginPlay() override;

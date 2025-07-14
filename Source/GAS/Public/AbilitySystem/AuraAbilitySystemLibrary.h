@@ -79,39 +79,13 @@ public:
 	UFUNCTION(BlueprintPure, Category="MyAbilitySystemLibrary|CharacterClassDefaults")
 	static UAbilityInfo* GetAbilityInfo(const UObject* WorldContextObject);
 
-	/*--------游戏效果上下文获取--------*/
+	/*--------游戏效果上下文获取和设置--------*/
 	//是否格挡
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
 	static bool IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle);
 	//是否暴击
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
 	static bool IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle);
-
-	//设置是否格挡 UPARAM(ref)实现蓝图节点左侧参数
-	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
-	static void SetIsBlockedHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit);
-	//设置是否暴击
-	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
-	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
-
-	/*--------Gameplay Mechanics--------*/
-	//获取到攻击位置半径内的所有动态Actor
-	UFUNCTION(BlueprintCallable, Category="MyAbilitySystemLibrary|GameplayMechanics")
-	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject,
-		TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
-
-	//是否友军
-	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
-	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
-	
-    //通过技能生成的负面配置项应用技能负面效果
-	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|DamageEffect")
-	static FGameplayEffectContextHandle ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams);
-
-	//通过敌人类型和等级获取XP奖励
-	static int32 GetXPRewardForClassAndLevel(const UObject* WorldContextObject, ECharacterClass CharacterClass, int32 CharacterLevel);
-
-	/*---------GameplayEffectDebuff---------*/
 	//获取当前GE是否成功应用负面效果
 	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
 	static bool IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle);
@@ -132,6 +106,39 @@ public:
 	UFUNCTION(BlueprintPure, Category="RPGAbilitySystemLibrary|GameplayEffects")
 	static FGameplayTag GetDeBuffDamageType(const FGameplayEffectContextHandle& EffectContextHandle);
 
+	// 从指定的游戏效果上下文中获取死亡冲击力的方向和强度
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static FVector GetDeathImpulse(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	// 从指定的游戏效果上下文中获取击退力的方向和强度
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static FVector GetKnockbackForce(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	// 检查指定的游戏效果上下文是否包含径向损伤信息
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static bool IsRadialDamage(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	// 从指定的游戏效果上下文中获取径向损伤的内半径
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static float GetRadialDamageInnerRadius(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	// 从指定的游戏效果上下文中获取径向损伤的外半径
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static float GetRadialDamageOuterRadius(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	// 从指定的游戏效果上下文中获取径向损伤的起源点
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static FVector GetRadialDamageOrigin(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	//----------------
+
+	//设置是否格挡 UPARAM(ref)实现蓝图节点左侧参数
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetIsBlockedHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit);
+	//设置是否暴击
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
+	
 	//设置GE是否应用负面效果
 	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
 	static void SetIsSuccessfulDeBuff(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsSuccessfulDeBuff);
@@ -139,6 +146,97 @@ public:
 	//设置GE负面效果相关数值 负面效果伤害类型 负面效果伤害 负面效果持续时间 负面效果触发间隔时间
 	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
 	static void SetDeBuff(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, FGameplayTag& InDamageType, float InDamage, float InDuration, float InFrequency);
+
+	// 设置死亡冲量
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// InImpulse: 死亡时的冲量，用于控制角色的死亡动画或移动
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetDeathImpulse(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, const FVector& InImpulse);
+	
+	// 设置击退力
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// InForce: 击退力的大小，用于控制角色的击退动画或移动
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetKnockbackForce(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, const FVector& InForce);
+	
+	// 设置是否为径向伤害
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// bInIsRadialDamage: 是否为径向伤害的标志，用于控制伤害的计算方式
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetIsRadialDamage(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsRadialDamage);
+	
+	// 设置径向伤害内半径
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// InInnerRadius: 径向伤害的内半径，用于控制伤害的范围
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetRadialDamageInnerRadius(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, float InInnerRadius);
+	
+	// 设置径向伤害外半径
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// InOuterRadius: 径向伤害的外半径，用于控制伤害的范围
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetRadialDamageOuterRadius(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, float InOuterRadius);
+	
+	// 设置径向伤害起源点
+	// EffectContextHandle: 效果上下文句柄，用于传递和修改游戏效果相关数据
+	// InOrigin: 径向伤害的起源点，用于控制伤害的计算位置
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetRadialDamageOrigin(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, const FVector& InOrigin);
+
+	/*--------Gameplay Mechanics--------*/
+	//获取到攻击位置半径内的所有动态Actor
+	UFUNCTION(BlueprintCallable, Category="MyAbilitySystemLibrary|GameplayMechanics")
+	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject,
+		TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
+
+	//是否友军
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
+	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
+	
+    //通过技能生成的负面配置项应用技能负面效果
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|DamageEffect")
+	static FGameplayEffectContextHandle ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams);
+
+
+	// 生成均匀分布的多端角度数组
+	// 
+	// 参数:
+	// - Forward: 前进方向向量
+	// - Axis: 旋转轴向量
+	// - Spread: 分散角度，决定旋转器之间的角度差
+	// - NumRotators: 生成的旋转器数量
+	// 
+	// 返回值:
+	// 返回一个包含多个均匀分布的旋转器（FRotator）的数组
+	// 
+	// 说明:
+	// 该函数用于在指定的前进方向和旋转轴上生成多个均匀分布的旋转器，可以用于如技能发射等游戏机制中
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
+	static TArray<FRotator> EvenlySpacedRotators(const FVector& Forward, const FVector& Axis, float Spread, int32 NumRotators);
+	
+	// 生成均匀分布的多段朝向数组
+	// 
+	// 参数:
+	// - Forward: 前进方向向量
+	// - Axis: 旋转轴向量
+	// - Spread: 分散角度，决定向量之间的角度差
+	// - NumVectors: 生成的向量数量
+	// 
+	// 返回值:
+	// 返回一个包含多个均匀旋转的向量（FVector）的数组
+	// 
+	// 说明:
+	// 该函数用于在指定的前进方向和旋转轴上生成多个均匀旋转的向量，适用于需要在多个方向上应用力或移动的场景
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
+	static TArray<FVector> EvenlyRotatedVectors(const FVector& Forward, const FVector& Axis, float Spread, int32 NumVectors);
+
+	//通过敌人类型和等级获取XP奖励
+	static int32 GetXPRewardForClassAndLevel(const UObject* WorldContextObject, ECharacterClass CharacterClass, int32 CharacterLevel);
+
+	/*---------GameplayEffectDebuff---------*/
+	
+
+	
 
 	
 };

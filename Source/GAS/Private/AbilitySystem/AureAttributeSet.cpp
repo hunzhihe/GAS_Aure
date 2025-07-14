@@ -135,8 +135,8 @@ void UAureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	{
 		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
 	}
-
-	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+    //当传入伤害属性时，并且当前生命值大于0
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute() && GetHealth() > 0.f )
 	{
 		HandleInComingDamage(Props);
 	}
@@ -168,6 +168,19 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 			TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
 			Props.TargetASC->CancelAbilities(&TagContainer);
 			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+
+			//判断当前是否应用的负面效果
+			if (UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(Props.EffectContextHandle))
+			{
+				HandleDebuff(Props);
+			}
+
+			//设置击退效果
+			const FVector& knockbackForce = UAuraAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
+			if (!knockbackForce.IsNearlyZero(1.0f))
+			{
+				Props.TargetCharacter->LaunchCharacter(knockbackForce, true, true);
+			}
 		}
 		else
 		{
@@ -175,8 +188,9 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
 			if (CombatInterface)
 			{
-				CombatInterface->Die();
+				CombatInterface->Die(UAuraAbilitySystemLibrary::GetDeathImpulse(Props.EffectContextHandle));
 			}
+			
 			//发送经验
 			SendXPEvent(Props);
 		}
@@ -187,11 +201,7 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 		
 	ShowFloatingText(Props, LocalIncomingDamage, IsBlockedHit, IsCriticalHit);
 
-	//判断当前是否应用的负面效果
-	if (UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(Props.EffectContextHandle))
-	{
-		HandleDebuff(Props);
-	}
+
 }
 
 void UAureAttributeSet::HandleDebuff(const FEffectProperties& Props)
@@ -283,7 +293,6 @@ void UAureAttributeSet::HandleDebuff(const FEffectProperties& Props)
 	    // 应用 gameplay effect spec 到目标身上
 	    Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
 	}
-	
 }
 
 void UAureAttributeSet::HandleIncomingXP(const FEffectProperties& Props)

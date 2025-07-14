@@ -67,7 +67,19 @@ void UAureAbilitySystemComponent::AddCharacterPassiveAbilities(
 
 void UAureAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
 {
-
+	// 检查输入标签是否有效，如果无效则直接返回
+	if(!InputTag.IsValid()) return;
+	
+	// 遍历所有可激活的能力
+	for(auto AbilitySpec : GetActivatableAbilities())
+	{
+	    // 检查能力规格中的动态源标签是否包含与输入标签完全匹配的标签
+	    if(AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
+	    {
+	        // 如果找到匹配的标签，则调用能力输入按下处理函数
+	        AbilitySpecInputPressed(AbilitySpec);
+	    }
+	}
 }
 
 

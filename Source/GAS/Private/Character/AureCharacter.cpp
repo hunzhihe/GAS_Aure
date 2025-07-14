@@ -78,9 +78,9 @@ int32 AAureCharacter::GetPlayerLevel_Implementation()
 	return AurePlayerState->GetPlayerLevel();
 }
 
-void AAureCharacter::Die()
+void AAureCharacter::Die(const FVector& DeathImpulse)
 {
-	Super::Die();
+	Super::Die(DeathImpulse);
 }
 
 void AAureCharacter::AddToXP_Implementation(int32 InXP)

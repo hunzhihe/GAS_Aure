@@ -86,6 +86,11 @@ void AAurePlayerController::SetupInputComponent()
 
 void AAurePlayerController::Move(const FInputActionValue& InputActionValue)
 {
+	//通过标签阻止悬停事件的触发
+	if(GetASC() && GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_InputHeld))
+	{
+		return;
+	}
 	// 获取输入动作值并转换为二维向量
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 	
@@ -124,6 +129,16 @@ void AAurePlayerController::PlayerTick(float DeltaTime)
 
 void AAurePlayerController::CursorTrace()
 {
+	//判断当前事件是否被阻挡，如果事件被阻挡，则清除相关内容
+	if (GetASC()&&GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_CursorTrace))
+	{
+		if (ThisActor) UnHighlightActor(ThisActor);
+		if (LastActor) UnHighlightActor(LastActor);
+		ThisActor = nullptr;
+		LastActor = nullptr;
+		return;
+	}
+	
 	 // 获取光标下的命中结果
 	 GetHitResultUnderCursor( ECC_Visibility, false, CursorHit);
 	
@@ -178,13 +193,20 @@ void AAurePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 	// 	FColor::Red,
 	// 	FString::Printf(TEXT("AbilityInputTagPressed: %s"),
 	// 		*InputTag.ToString()));
+
+	//处理判断按下事件是否被阻挡
+	if(GetASC() && GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_InputPressed))
+	{
+		return;
+	}
 	if(InputTag.MatchesTagExact(FAureGameplayTags::Get().InputTag_LMB))
 	{
 		bTargeting = ThisActor != nullptr; //ThisActor为鼠标悬停在敌人身上才会有值
 		bAutoRunning = false;
 		FollowTime = 0.f; //重置统计的时间
 	}
-	
+	//调用ASC内创建的键位按下事件
+	if(GetASC()) GetASC()->AbilityInputTagPressed(InputTag);
 }
 
 void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
@@ -196,6 +218,12 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	// 	FString::Printf(TEXT("AbilityInputTagReleased: %s"),
 	// 		*InputTag.ToString()));
 	// 检查输入标签是否与左鼠标按钮的标签匹配
+
+	//处理判断抬起事件是否被阻挡
+	if(GetASC() && GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_InputReleased))
+	{
+		return;
+	}
 	if(!InputTag.MatchesTagExact(FAureGameplayTags::Get().InputTag_LMB))
 	{
 	    // 如果不匹配且存在能力系统组件(ASC)，则调用其AbilityInputTagReleased方法
@@ -245,6 +273,12 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 
 void AAurePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
+
+	//通过标签阻止悬停事件的触发
+	if(GetASC() && GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_InputHeld))
+	{
+		return;
+	}
 	// 检查输入标签是否精确匹配左鼠标按钮的标签
 	if(!InputTag.MatchesTagExact(FAureGameplayTags::Get().InputTag_LMB))
 	{

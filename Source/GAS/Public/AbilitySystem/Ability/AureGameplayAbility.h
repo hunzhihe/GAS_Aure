@@ -24,6 +24,10 @@ public:
 	//获取锁定技能描述
 	static  FString GetLockedDescription(int32 Level);
 
+	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+
+
 protected:
 	//获取技能蓝量消耗
 	float GetManaCost(float InLevel = 1.f) const;

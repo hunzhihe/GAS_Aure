@@ -111,6 +111,21 @@ void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 	//重叠后销毁
 	if (HasAuthority())
 	{
+        //获取碰撞时，技能的朝向
+		const FVector DeathImpulse = GetActorForwardVector() * DamageEffectParams.DeathImpulseMagnitude;
+		//死亡冲击的力度和方向
+		DamageEffectParams.DeathImpulse = DeathImpulse;
+
+		//判断攻击是否触发击退
+        if (const bool bKnockback = FMath::RandRange(1,100)<DamageEffectParams.KnockbackChance)
+        {
+	        //设置击退的力度和方向,设置方向随机偏转，基于向上的方向向量
+        	const FVector KnockbackDirection = GetActorForwardVector().RotateAngleAxis(-45.f,GetActorRightVector());
+        	
+        	DamageEffectParams.KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;
+        }
+		
+		
 		// 对目标应用伤害
 		if (UAbilitySystemComponent* TargetASC  = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
 		{

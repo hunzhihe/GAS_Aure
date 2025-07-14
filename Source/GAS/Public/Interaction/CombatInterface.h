@@ -95,7 +95,7 @@ public:
 	FTaggedMontage GetTaggedMontageByTag(const FGameplayTag& MontageTag);
 	
 	//死亡函数，子类重写
-	virtual void Die() = 0;
+	virtual void Die(const FVector& DeathImpulse) = 0;
 
 	//获取角色拥有的仆从数量
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -112,5 +112,16 @@ public:
 	//获取ASC注册成功后的委托
 	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() = 0;
 	//获取死亡委托
-	virtual FOnDeath& GetOnDeathDelegate() = 0; 
+	virtual FOnDeath& GetOnDeathDelegate() = 0;
+
+	//设置是否持续施法
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetInShockLoop(bool bInLoop);
+
+	/**
+	 * 获取角色使用的武器指针
+	 * @return 武器骨骼网格体组件
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	USkeletalMeshComponent* GetWeapon();
 };

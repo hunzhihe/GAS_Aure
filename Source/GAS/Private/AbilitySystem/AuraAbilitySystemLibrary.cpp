@@ -295,6 +295,12 @@ FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const 
 	
 	// 将来源演员对象添加到效果上下文中，以便在应用伤害效果时考虑来源的信息
 	EffectContexthandle.AddSourceObject(SourceAvatarActor);
+
+	//设置死亡冲量
+	SetDeathImpulse(EffectContexthandle, DamageEffectParams.DeathImpulse);
+
+	//设置攻击击退
+	SetKnockbackForce( EffectContexthandle, DamageEffectParams.KnockbackForce);
 		
 	// 创建一个游戏效果规范句柄，用于具体化伤害效果的配置，包括效果类、能力等级和上下文信息
 	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(
@@ -318,8 +324,76 @@ FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const 
 	return EffectContexthandle;
 }
 
+TArray<FRotator> UAuraAbilitySystemLibrary::EvenlySpacedRotators(const FVector& Forward, const FVector& Axis,
+	float Spread, int32 NumRotators)
+{
+	// 声明一个FRotator类型的动态数组，用于存储计算出的旋转值
+	TArray<FRotator> Rotators;
+	
+	// 计算相对于Forward方向，左侧最边缘的方向向量
+	const FVector LeftOfSptead = Forward.RotateAngleAxis(-Spread / 2.f, Axis);
+	
+	// 根据旋转生成器的数量生成相应的旋转值
+	if (NumRotators > 1)
+	{
+	    // 计算相邻两个旋转值之间的角度差
+	    const float DeltaSpread = Spread / NumRotators;
+	
+	    // 为每个旋转生成器计算一个旋转值，并添加到数组中
+	    for (int32 i = 0; i < NumRotators; i++)
+	    {
+	        // 计算当前旋转生成器的方向向量
+	        const FVector Direction = LeftOfSptead.RotateAngleAxis(DeltaSpread * (i + 0.5f), Axis);
+	        // 将方向向量转换为旋转值，并添加到数组中
+	        Rotators.Add(Direction.Rotation());
+	    }
+	}
+	else
+	{
+	    // 如果只有一个旋转生成器，直接使用Forward方向的旋转值
+	    Rotators.Add(Forward.Rotation());
+	}
+	
+	// 返回计算出的旋转值数组
+	return Rotators;
+}
+
+TArray<FVector> UAuraAbilitySystemLibrary::EvenlyRotatedVectors(const FVector& Forward, const FVector& Axis,
+	float Spread, int32 NumVectors)
+{
+	// 初始化一个数组，用于存储生成的方向向量
+		TArray<FVector> Vectors;
+		
+	// 计算散射范围的左侧边界向量
+		const FVector LeftOfSpread = Forward.RotateAngleAxis(-Spread / 2.f, Axis);
+		
+	// 如果向量数量大于1，则根据散射角度生成多个方向向量
+		if(NumVectors > 1)
+		{
+	// 计算相邻两个向量之间的角度差
+			const float DeltaSpread = Spread / NumVectors;
+	 
+	// 循环生成每个方向向量
+			for(int32 i=0; i<NumVectors; i++)
+			{
+	// 根据散射角度和当前索引计算并生成方向向量
+				const FVector Direction = LeftOfSpread.RotateAngleAxis(DeltaSpread * (i + 0.5f), Axis);
+	// 将生成的方向向量添加到数组中
+				Vectors.Add(Direction);
+			}
+		}
+	// 如果向量数量等于1，直接使用原始向前方向作为方向向量
+		else
+		{
+			Vectors.Add(Forward);
+		}
+	 
+	// 返回生成的方向向量数组
+		return Vectors;
+}
+
 int32 UAuraAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* WorldContextObject,
-	ECharacterClass CharacterClass, int32 CharacterLevel)
+                                                             ECharacterClass CharacterClass, int32 CharacterLevel)
 {
 	// 获取角色类信息对象
     UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
@@ -391,8 +465,80 @@ FGameplayTag UAuraAbilitySystemLibrary::GetDeBuffDamageType(const FGameplayEffec
 	return FGameplayTag();
 }
 
+FVector UAuraAbilitySystemLibrary::GetDeathImpulse(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 如果转换成功，则返回与死亡相关的脉冲（可能用于游戏中的死亡效果）
+	    return AuraEffectContext->GetDeathImpulse();
+	}
+	// 如果转换失败，表明没有相关的死亡脉冲，返回零向量
+	return FVector::ZeroVector;
+}
+
+FVector UAuraAbilitySystemLibrary::GetKnockbackForce(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	// 如果转换成功，则调用GetKnockbackForce方法获取击退力
+	// 如果转换失败，则返回零向量，表示没有击退力
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    return AuraEffectContext->GetKnockbackForce();
+	}
+	return FVector::ZeroVector;
+}
+
+bool UAuraAbilitySystemLibrary::IsRadialDamage(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 检查AuraEffectContext是否为径向伤害类型
+	    return AuraEffectContext->IsRadialDamage();
+	}
+	// 如果转换失败，则默认返回false
+	return false;
+}
+
+float UAuraAbilitySystemLibrary::GetRadialDamageInnerRadius(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 如果转换成功，则返回径向伤害的内半径
+	    return AuraEffectContext->GetRadialDamageInnerRadius();
+	}
+	// 如果转换失败，则返回0.0
+	return 0.f;
+}
+
+float UAuraAbilitySystemLibrary::GetRadialDamageOuterRadius(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 尝试将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 如果转换成功，则返回径向损害的外半径
+	    return AuraEffectContext->GetRadialDamageOuterRadius();
+	}
+	// 如果转换失败，则返回0.0
+	return 0.f;
+}
+
+FVector UAuraAbilitySystemLibrary::GetRadialDamageOrigin(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	// 将EffectContextHandle转换为FAureGameplayEffectContext类型
+	if (const FAureGameplayEffectContext* AuraEffectContext = static_cast<const FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+	    // 如果转换成功，则返回径向伤害的起源位置
+	    return AuraEffectContext->GetRadialDamageOrigin();
+	}
+	// 如果转换失败，则返回零向量，表示没有伤害起源位置
+	return FVector::ZeroVector;
+}
+
 void UAuraAbilitySystemLibrary::SetIsSuccessfulDeBuff(FGameplayEffectContextHandle& EffectContextHandle,
-	bool bInIsSuccessfulDeBuff)
+                                                      bool bInIsSuccessfulDeBuff)
 {
 	FAureGameplayEffectContext* AureEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get());
 	AureEffectContext->SetSuccessfulDeBuff(bInIsSuccessfulDeBuff);
@@ -410,4 +556,58 @@ void UAuraAbilitySystemLibrary::SetDeBuff(FGameplayEffectContextHandle& EffectCo
 	AureEffectContext->SetDeBuffFrequency(InFrequency);
 	AureEffectContext->SetDebuffDamageType(DamageType);
 	
+}
+
+void UAuraAbilitySystemLibrary::SetDeathImpulse(FGameplayEffectContextHandle& EffectContextHandle,
+	const FVector& InImpulse)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetDeathImpulse(InImpulse);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetKnockbackForce(FGameplayEffectContextHandle& EffectContextHandle,
+	const FVector& InForce)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetKnockbackForce(InForce);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetIsRadialDamage(FGameplayEffectContextHandle& EffectContextHandle,
+	bool bInIsRadialDamage)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetRadialDamage(bInIsRadialDamage);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetRadialDamageInnerRadius(FGameplayEffectContextHandle& EffectContextHandle,
+	float InInnerRadius)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetRadialDamageInnerRadius(InInnerRadius);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetRadialDamageOuterRadius(FGameplayEffectContextHandle& EffectContextHandle,
+	float InOuterRadius)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetRadialDamageOuterRadius(InOuterRadius);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetRadialDamageOrigin(FGameplayEffectContextHandle& EffectContextHandle,
+	const FVector& InOrigin)
+{
+	if (FAureGameplayEffectContext* AuraEffectContext = static_cast<FAureGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		AuraEffectContext->SetRadialDamageOrigin(InOrigin);
+	}
 }

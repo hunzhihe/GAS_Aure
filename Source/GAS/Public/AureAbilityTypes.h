@@ -137,7 +137,30 @@ public:
 	TSharedPtr<FGameplayTag> GetDebuffDamageType() const { return DamageType;}
 	void SetDebuffDamageType(const TSharedPtr<FGameplayTag>& InDamageType) {DamageType = InDamageType;}
 
+	//获取和设置死亡冲击的强度
+	FVector GetDeathImpulse() const { return DeathImpulse;}
+	void SetDeathImpulse(const FVector& InDeathImpulse) {DeathImpulse = InDeathImpulse;}
 
+	//获取和设置击退力量
+	FVector GetKnockbackForce() const { return KnockbackForce;}
+	void SetKnockbackForce(const FVector& InKnockbackForce) {KnockbackForce = InKnockbackForce;}
+
+	//获取和设置是否为径向伤害
+	bool IsRadialDamage() const { return bIsRadialDamage;}
+	void SetRadialDamage(bool bInIsRadialDamage) {bIsRadialDamage = bInIsRadialDamage;}
+
+	//获取和设置径向伤害的内半径
+	float GetRadialDamageInnerRadius() const { return RadialDamageInnerRadius;}
+	void SetRadialDamageInnerRadius(float InRadialDamageInnerRadius) {RadialDamageInnerRadius = InRadialDamageInnerRadius;}
+
+	//获取和设置径向伤害的外半径
+	float GetRadialDamageOuterRadius() const { return RadialDamageOuterRadius;}
+	void SetRadialDamageOuterRadius(float InRadialDamageOuterRadius) {RadialDamageOuterRadius = InRadialDamageOuterRadius;}
+
+	//获取和设置径向伤害的源点
+	FVector GetRadialDamageOrigin() const { return RadialDamageOrigin;}
+	void SetRadialDamageOrigin(const FVector& InRadialDamageOrigin) {RadialDamageOrigin = InRadialDamageOrigin;}
+	
 
 	
 	//返回用于序列化的结构体
@@ -187,7 +210,32 @@ protected:
 	
 
 	//负面效果的伤害类型
-	TSharedPtr<FGameplayTag> DamageType; 
+	TSharedPtr<FGameplayTag> DamageType;
+
+	
+	// 当角色死亡时应用的冲量，用于模拟死亡时的物理效果
+	UPROPERTY()
+	FVector DeathImpulse = FVector::ZeroVector;
+	
+	// 击退力量的方向和强度，用于在受到攻击时将角色推开
+	UPROPERTY()
+	FVector KnockbackForce = FVector::ZeroVector;
+	
+	// 是否为径向（圆形）损伤，用于确定损伤类型
+	UPROPERTY()
+	bool bIsRadialDamage = false;
+	
+	// 径向损伤的内半径，在此范围内的目标将受到全额损伤
+	UPROPERTY()
+	float RadialDamageInnerRadius = 0.f;
+	
+	// 径向损伤的外半径，介于内半径和外半径之间的目标将受到渐变损伤
+	UPROPERTY()
+	float RadialDamageOuterRadius = 0.f;
+	
+	// 径向损伤的起源点，损伤从此点向外扩展
+	UPROPERTY()
+	FVector RadialDamageOrigin = FVector::ZeroVector;
 	
 };
 
