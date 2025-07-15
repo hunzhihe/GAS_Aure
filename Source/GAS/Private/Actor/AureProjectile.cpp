@@ -23,7 +23,7 @@ Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
 SetRootComponent(Sphere);
 
 // 设置球体组件的碰撞类型为Projectile
-Sphere->SetCollisionObjectType(ECC_Projectile);
+Sphere->SetCollisionObjectType(ECC_PROJECTILE);
 // 启用仅查询模式的碰撞检测，意味着该组件不会受到物理模拟的影响
 Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 // 设置球体组件对所有碰撞通道的默认响应为忽略

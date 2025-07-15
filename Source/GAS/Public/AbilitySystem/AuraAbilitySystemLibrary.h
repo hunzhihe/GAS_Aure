@@ -189,6 +189,18 @@ public:
 	static void GetLivePlayersWithinRadius(const UObject* WorldContextObject,
 		TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin);
 
+	/**
+	 * 获取距离目标位置最近的几个目标
+	 * @param MaxTargets 获取最大目标的数量
+	 * @param Actors 需要计算的目标数组
+	 * @param OutClosestTargets 返回获取到的最近的目标
+	 * @param Origin 计算的位置
+	 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayMechanics")
+	static void GetClosestTargets(int32 MaxTargets, const TArray<AActor*>& Actors, TArray<AActor*>& OutClosestTargets, const FVector& Origin);
+	
+
+	
 	//是否友军
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
 	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
