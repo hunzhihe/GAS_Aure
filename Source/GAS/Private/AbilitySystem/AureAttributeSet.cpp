@@ -164,11 +164,14 @@ void UAureAttributeSet::HandleInComingDamage(const FEffectProperties& Props)
 		//受击动画
 		if (!bFatal)
 		{
-			FGameplayTagContainer TagContainer;
-			TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
-			Props.TargetASC->CancelAbilities(&TagContainer);
-			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
-
+			//当是受到闪电链攻击时，不会激活受击标签
+			if (Props.TargetCharacter->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(Props.TargetCharacter))
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FAureGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->CancelAbilities(&TagContainer);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			}
 			//判断当前是否应用的负面效果
 			if (UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(Props.EffectContextHandle))
 			{

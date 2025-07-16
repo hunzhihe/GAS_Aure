@@ -8,7 +8,9 @@
 #include "AureGameplayTags.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 struct FAureGameplayTags;
 // Sets default values
@@ -30,7 +32,22 @@ AAureBaseCharacter::AAureBaseCharacter()
 	BurnDeBuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("BurnDeBuffComponent");
 	BurnDeBuffComponent->SetupAttachment(GetRootComponent());
 	BurnDeBuffComponent->DebuffTag = FAureGameplayTags::Get().Debuff_Burn; //设置匹配的负面标签
+
+	//初始化眩晕负面效果组件
+	StunDeBuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("StunDeBuffComponent");
+	StunDeBuffComponent->SetupAttachment(GetRootComponent());
+	StunDeBuffComponent->DebuffTag = FAureGameplayTags::Get().Debuff_Stun;
 	
+}
+
+void AAureBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+
+	DOREPLIFETIME(AAureBaseCharacter, bIsStunned);
+	DOREPLIFETIME(AAureBaseCharacter, bIsBurned);
+	DOREPLIFETIME(AAureBaseCharacter, bIsBeingShocked);
 }
 
 FVector AAureBaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
@@ -137,6 +154,16 @@ USkeletalMeshComponent* AAureBaseCharacter::GetWeapon_Implementation()
 	return Weapon;
 }
 
+void AAureBaseCharacter::SetIsBeingShocked_Implementation(bool bInShock)
+{
+	bIsBeingShocked = bInShock;
+}
+
+bool AAureBaseCharacter::IsBeingShocked_Implementation() const
+{
+	return bIsBeingShocked;
+}
+
 
 void AAureBaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
 {
@@ -182,6 +209,28 @@ void AAureBaseCharacter::MulticastHandleDeath_Implementation(const FVector& Deat
 UAbilitySystemComponent* AAureBaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void AAureBaseCharacter::OnRep_Stunned()
+{
+}
+
+void AAureBaseCharacter::OnRep_Burned()
+{
+}
+
+void AAureBaseCharacter::DeBuffRegisterChanged()
+{
+	//监听眩晕标签变动
+	AbilitySystemComponent->RegisterGameplayTagEvent(
+		FAureGameplayTags::Get().Debuff_Stun,EGameplayTagEventType::NewOrRemoved).AddUObject(
+			this,&AAureBaseCharacter::StunTagChanged);
+}
+
+void AAureBaseCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bIsStunned = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsStunned ? 0.f : BaseWalkSpeed;
 }
 
 // Called when the game starts or when spawned

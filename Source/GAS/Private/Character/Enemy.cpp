@@ -119,6 +119,16 @@ void AAureEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCou
 	}
 }
 
+void AAureEnemy::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	Super::StunTagChanged(CallbackTag, NewCount);
+	if (AureAIController && AureAIController->GetBlackboardComponent())
+	{
+		//设置黑板键的值
+		AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("Stuned"), bIsStunned);
+	}
+}
+
 void AAureEnemy::BeginPlay()
 {
 	Super::BeginPlay();
@@ -167,6 +177,10 @@ void AAureEnemy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 	Cast<UAureAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+
+	
+	//注册监听负面标签变动
+	DeBuffRegisterChanged();
 
 	//初始化属性
 	InitializeDefaultAttributes();

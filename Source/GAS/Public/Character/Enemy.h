@@ -56,10 +56,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	bool bHitReacting = false;
 
-	// 移动速度
-	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category="Combat")
-	float BaseWalkSpeed = 250.f;
-
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
+	
 
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<AActor> CombatTarget;

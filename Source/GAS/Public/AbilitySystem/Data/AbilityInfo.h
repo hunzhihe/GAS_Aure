@@ -50,7 +50,7 @@ struct FAureAbilityInfo
 
 	//解锁技能所需角色的等级
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	int32 LevelRequirement;
+	int32 LevelRequirement = 0;
 
 	//当前技能使用的技能类
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

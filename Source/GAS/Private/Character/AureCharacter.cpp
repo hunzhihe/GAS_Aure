@@ -179,6 +179,9 @@ void AAureCharacter::InitAbilityActorInfo()
 	 //触发Actor的技能信息设置回调
 	 Cast<UAureAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 
+	//注册监听负面标签变动
+	DeBuffRegisterChanged();
+
 	//获取PC，再调用HUD
 	 if (AAurePlayerController* AurePlayerController = Cast<AAurePlayerController>(GetController()))
 	 {

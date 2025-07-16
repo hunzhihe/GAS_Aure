@@ -24,6 +24,8 @@ public:
 	// Sets default values for this character's properties
 	AAureBaseCharacter();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
@@ -44,8 +46,17 @@ public:
 	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override;
 	virtual FOnDeath& GetOnDeathDelegate() override;
 	virtual USkeletalMeshComponent* GetWeapon_Implementation() override;
+	virtual void SetIsBeingShocked_Implementation(bool bInShock) override;
+	virtual bool IsBeingShocked_Implementation() const override;
 	/** end Combat Interface */
 
+	//ASC注册成功委托
+	FOnASCRegistered OnASCRegistered;
+	//角色死亡后触发的死亡委托
+	FOnDeath OnDeath; 
+
+	
+	
     // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastHandleDeath(const FVector& DeathImpulse);
@@ -55,12 +66,34 @@ public:
 	TArray<FTaggedMontage> AttackMontages;
 	
 
-	//ASC注册成功委托
-	FOnASCRegistered OnASCRegistered;
-	//角色死亡后触发的死亡委托
-	FOnDeath OnDeath; 
+
 	
 
+	//当前角色是否处于眩晕状态
+	UPROPERTY(ReplicatedUsing=OnRep_Stunned, BlueprintReadOnly)
+	bool bIsStunned = false;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Burned, BlueprintReadOnly)
+	bool bIsBurned = false;
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	bool bIsBeingShocked = false;
+
+	UFUNCTION()
+	virtual void OnRep_Stunned();
+
+	UFUNCTION()
+	virtual void OnRep_Burned();
+
+	//注册用于监听负面标签变动的函数
+	void DeBuffRegisterChanged();
+	//眩晕标签变动后的回调
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	//当前角色的最大移动速度
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
+	float BaseWalkSpeed = 600.f;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -166,6 +199,10 @@ protected:
 	//火焰负面效果表现组件
 	UPROPERTY(VisibleAnywhere) 
 	TObjectPtr<UDebuffNiagaraComponent> BurnDeBuffComponent;
+
+	//眩晕负面效果表现组件
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDebuffNiagaraComponent> StunDeBuffComponent;
 	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")

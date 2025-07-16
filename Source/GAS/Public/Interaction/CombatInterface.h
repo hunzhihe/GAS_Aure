@@ -124,4 +124,20 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetWeapon();
+
+
+	/**
+	 * 获取角色是否处于闪电链攻击状态
+	 * @return 布尔值，如果处于返回true
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool IsBeingShocked() const;
+
+	/**
+	 * 设置角色是否处于闪电链攻击状态
+	 * @param bInShock 
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetIsBeingShocked(bool bInShock);
+	
 };
