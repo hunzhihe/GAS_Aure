@@ -37,7 +37,25 @@ AAureBaseCharacter::AAureBaseCharacter()
 	StunDeBuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("StunDeBuffComponent");
 	StunDeBuffComponent->SetupAttachment(GetRootComponent());
 	StunDeBuffComponent->DebuffTag = FAureGameplayTags::Get().Debuff_Stun;
+
+
+	//实例化被动技能组件，并挂载
+	EffectAttachComponent = CreateDefaultSubobject<USceneComponent>("EffectAttachPoint");
+	EffectAttachComponent->SetupAttachment(GetRootComponent());
+	HaloOfProtectionNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("HaloOfProtectionComponent");
+	HaloOfProtectionNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	LifeSiphonNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("LifeSiphonComponent");
+	LifeSiphonNiagaraComponent->SetupAttachment(EffectAttachComponent);
+	ManaSiphonNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("ManaSiphonComponent");
+	ManaSiphonNiagaraComponent->SetupAttachment(EffectAttachComponent);
 	
+}
+
+void AAureBaseCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	//防止特效跟随人物旋转，每一帧更新修改旋转为默认
+	EffectAttachComponent->SetWorldRotation(FRotator::ZeroRotator);
 }
 
 void AAureBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

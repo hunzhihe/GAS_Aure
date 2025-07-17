@@ -32,7 +32,8 @@ void UAureGameplayAbility::InputPressed(const FGameplayAbilitySpecHandle Handle,
 	if (AbilitySpec->IsActive())
 	{
 		//将按下事件复制到服务器和所有相关的客户端
-		ActorInfo->AbilitySystemComponent->InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, Handle,ActivationInfo.GetActivationPredictionKey());
+		ActorInfo->AbilitySystemComponent->InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed,
+			Handle,ActivationInfo.GetActivationPredictionKey());
 		
 	}
 }
@@ -42,7 +43,8 @@ void UAureGameplayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle
 {
 	Super::InputReleased(Handle, ActorInfo, ActivationInfo);
 	//将释放事件复制到服务器和所有相关的客户端
-	ActorInfo->AbilitySystemComponent->InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, Handle,ActivationInfo.GetActivationPredictionKey());
+	ActorInfo->AbilitySystemComponent->InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased,
+		Handle,ActivationInfo.GetActivationPredictionKey());
 }
 
 float UAureGameplayAbility::GetManaCost(float InLevel) const

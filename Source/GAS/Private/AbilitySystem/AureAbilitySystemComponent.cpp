@@ -185,6 +185,81 @@ FGameplayTag UAureAbilitySystemComponent::GetStatusFromSpec(const FGameplayAbili
 	return FGameplayTag();
 }
 
+FGameplayTag UAureAbilitySystemComponent::GetStatusFromAbilityTag(const FGameplayTag& AbilityTag)
+{
+	if (const FGameplayAbilitySpec* Spec = GetSpecFromAbilityTag(AbilityTag))
+	{
+		return GetStatusFromSpec(*Spec);
+	}
+	return FGameplayTag();
+}
+
+FGameplayTag UAureAbilitySystemComponent::GetSlotFromAbilityTag(const FGameplayTag& AbilityTag)
+{
+	if (const FGameplayAbilitySpec* Spec = GetSpecFromAbilityTag(AbilityTag))
+	{
+		return GetInputTagFromSpec(*Spec);
+	}
+	return FGameplayTag();
+}
+
+bool UAureAbilitySystemComponent::SlotIsEmpty(const FGameplayTag& Slot)
+{
+	FScopedAbilityListLock ActiveScopeLoc(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (AbilityHasSlot(AbilitySpec, Slot))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UAureAbilitySystemComponent::AbilityHasSlot(const FGameplayAbilitySpec& Spec, const FGameplayTag& Slot)
+{
+	return Spec.GetDynamicSpecSourceTags().HasTagExact(Slot);
+}
+
+bool UAureAbilitySystemComponent::AbilityHasAnySlot(const FGameplayAbilitySpec& Spec)
+{
+	return Spec.GetDynamicSpecSourceTags().HasTag(FGameplayTag::RequestGameplayTag(FName("InputTag")));
+}
+
+FGameplayAbilitySpec* UAureAbilitySystemComponent::GetSpecWithSlot(const FGameplayTag& Slot)
+{
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(Slot))
+		{
+			return &AbilitySpec;
+		}
+	}
+	return nullptr;
+}
+
+bool UAureAbilitySystemComponent::IsPassiveAbility(const FGameplayAbilitySpec& Spec) const
+{
+	const UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	const FGameplayTag AbilityTag = GetAbilityTagFromSpec(Spec);
+	const FAureAbilityInfo& Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	const FGameplayTag AbilityType = Info.AbilityType;
+	return AbilityType.MatchesTagExact(FAureGameplayTags::Get().Abilities_Type_Passive);
+}
+
+void UAureAbilitySystemComponent::AssignSlotToAbility(FGameplayAbilitySpec& Spec, const FGameplayTag& Slot)
+{
+	ClearSlot(  &Spec);
+	Spec.GetDynamicSpecSourceTags().AddTag(Slot);
+}
+
+void UAureAbilitySystemComponent::MulticastActivatePassiveEffect_Implementation(const FGameplayTag& AbilityTag,
+	bool bActivate)
+{
+	ActivatePassiveEffect.Broadcast(AbilityTag, bActivate);
+}
+
 FGameplayAbilitySpec* UAureAbilitySystemComponent::GetSpecFromAbilityTag(const FGameplayTag& AbilityTag)
 {
 	// 使用适用域锁将此作用域this的内容锁定（无法修改），在遍历结束时解锁，保证线程安全
@@ -298,21 +373,45 @@ void UAureAbilitySystemComponent::ServerEquipAbility_Implementation(const FGamep
 	    // 检查能力状态是否为已装备或已解锁
 	    if (Status == GameplayTags.Abilities_Status_Equipped||Status == GameplayTags.Abilities_Status_Unlocked)
 	    {
-	        // 清除插槽中的所有能力，为新能力腾出空间
-	        ClearAbilitiesOfSlot(Slot);
-	        // 清除能力规格中的插槽信息
-	        ClearSlot(AbilitySpec);
-	        // 将新的插槽标签添加到能力规格的动态源标签中
-	        AbilitySpec->GetDynamicSpecSourceTags().AddTag(Slot);
-	
-	        // 如果能力状态为已解锁，则将其更新为已装备
-	        if (Status.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
-	        {
-	            // 移除已解锁标签
-	            AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GameplayTags.Abilities_Status_Unlocked);
-	            // 添加已装备标签
-	            AbilitySpec->GetDynamicSpecSourceTags().AddTag(GameplayTags.Abilities_Status_Equipped);
-	        }
+	    	//检查插槽是否有技能，有则需要清除
+		    if (!SlotIsEmpty(Slot))
+		    {
+			    //获取目标插槽现在装备的技能
+			    if (const FGameplayAbilitySpec* SpecWithSlot = GetSpecWithSlot(Slot))
+			    {
+				    //技能槽位装配的是相同的技能，则不需要清除
+				    if (AbilityTag.MatchesTagExact(GetAbilityTagFromSpec(*SpecWithSlot)))
+				    {
+					    ClientEquipAbility(AbilityTag,Status,Slot,PrevSlot);
+				    	return;
+				    }
+
+			    	//如果是被动技能，我们需要先将技能取消执行
+				    if (IsPassiveAbility(*SpecWithSlot))
+				    {
+				    	//关闭被动技能特效
+				    	MulticastActivatePassiveEffect(GetAbilityTagFromSpec(*SpecWithSlot),false);
+					    DeactivatePassiveAbilityDelegate.Broadcast(GetAbilityTagFromSpec(*SpecWithSlot));
+				    }
+			    	//清空技能槽位
+			    	ClearAbilitiesOfSlot(Slot);
+			    }
+		    }
+
+	    	//技能没有设置到插槽（没有激活）
+		    if (!AbilityHasAnySlot(*AbilitySpec))
+		    {
+			    //如果是被动技能，装配就直接激活
+			    if (IsPassiveAbility(*AbilitySpec))
+			    {
+			    	//激活特效
+			    	MulticastActivatePassiveEffect(AbilityTag,true);
+				    TryActivateAbility(AbilitySpec->Handle);
+			    }
+		    }
+
+	    	//修改技能装配的插槽
+	    	AssignSlotToAbility(*AbilitySpec, Slot);
 	
 	        // 向客户端发送装备能力的请求
 	        ClientEquipAbility(AbilityTag, Status, Slot, PrevSlot);
@@ -335,9 +434,6 @@ void UAureAbilitySystemComponent::ClearSlot(FGameplayAbilitySpec* Spec)
 	
 	// 从Spec的动态规范源标签中移除该输入标签
 	Spec->GetDynamicSpecSourceTags().RemoveTag(Slot);
-	
-	// 标记Spec为脏，以便在后续处理中更新或重新计算
-	MarkAbilitySpecDirty(*Spec);
 }
 
 void UAureAbilitySystemComponent::ClearAbilitiesOfSlot(const FGameplayTag& Slot)

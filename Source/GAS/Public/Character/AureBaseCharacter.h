@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
+#include "AbilitySystem/Passive/PassiveNiagaraComponent.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "AureBaseCharacter.generated.h"
@@ -23,6 +24,7 @@ class GAS_API AAureBaseCharacter : public ACharacter,public IAbilitySystemInterf
 public:
 	// Sets default values for this character's properties
 	AAureBaseCharacter();
+	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -115,8 +117,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName TailSocketName;
 
-	UPROPERTY(EditAnywhere, Category="Combat")
-	TObjectPtr<UAnimMontage> HitReactMontage;
+
 
     //召唤的仆从数量
 	UPROPERTY(BlueprintReadOnly, Category="Combat")
@@ -220,5 +221,20 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
 	
+	UPROPERTY(EditAnywhere, Category="Combat")
+	TObjectPtr<UAnimMontage> HitReactMontage;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPassiveNiagaraComponent> HaloOfProtectionNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPassiveNiagaraComponent> LifeSiphonNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPassiveNiagaraComponent> ManaSiphonNiagaraComponent;
+	
+	//被动技能挂载的组件
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USceneComponent> EffectAttachComponent;
 
 };

@@ -13,7 +13,8 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* AssetTags */)
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/,int32);
 DECLARE_MULTICAST_DELEGATE_FourParams(FAbilityEquipped, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/, const FGameplayTag& /*输入标签*/, const FGameplayTag& /*上一个输入标签*/);
-
+DECLARE_MULTICAST_DELEGATE_OneParam(FDeactivatePassiveAbility, const FGameplayTag& /*技能标签*/); //中止一个技能激活的回调
+DECLARE_MULTICAST_DELEGATE_TwoParams(FActivePassiveEffect, const FGameplayTag& /*被动技能标签*/, bool /*激活或取消*/); //被动技能特效监听委托，对应特效是否开启
 //技能初始化应用后的回调委托
 DECLARE_MULTICAST_DELEGATE(FAbilitiesGiven)
 //单播委托，只能绑定一个回调函数
@@ -43,6 +44,12 @@ public:
 
 	//技能装配插槽改变的回调委托
 	FAbilityEquipped AbilityEquippedDelegate;
+
+	//取消技能激活的委托
+	FDeactivatePassiveAbility DeactivatePassiveAbilityDelegate;
+	
+	//被动技能对应特效委托
+	FActivePassiveEffect ActivatePassiveEffect;
 
 	//添加角色技能
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
@@ -77,6 +84,33 @@ public:
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 	//获取技能状态（锁定，待解锁，已解锁，已装备）标签
 	static FGameplayTag GetStatusFromSpec(const FGameplayAbilitySpec& AbilitySpec);
+	// 根据能力标签获取状态
+	FGameplayTag GetStatusFromAbilityTag(const FGameplayTag& AbilityTag);
+	// 根据能力标签获取槽位
+	FGameplayTag GetSlotFromAbilityTag(const FGameplayTag& AbilityTag);
+	// 检查槽位是否为空
+	bool SlotIsEmpty(const FGameplayTag& Slot);
+	// 检查能力是否具有指定的槽位
+	static bool AbilityHasSlot(const FGameplayAbilitySpec& Spec, const FGameplayTag& Slot);
+	// 检查能力是否具有任何槽位
+	static bool AbilityHasAnySlot(const FGameplayAbilitySpec& Spec);
+	// 根据槽位获取能力规格
+	FGameplayAbilitySpec* GetSpecWithSlot(const FGameplayTag& Slot);
+	// 检查能力是否为被动能力
+	bool IsPassiveAbility(const FGameplayAbilitySpec& Spec) const;
+	// 为能力分配槽位
+	static void AssignSlotToAbility(FGameplayAbilitySpec& Spec, const FGameplayTag& Slot);
+	
+	/**
+		 * 多网络被动特效委托广播，让每个客户端都可以看到特效
+		 * @param AbilityTag 被动技能标签
+		 * @param bActivate 激活或者关闭
+		 */
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastActivatePassiveEffect(const FGameplayTag& AbilityTag, bool bActivate);
+
+
+	
     //通过技能标签获取技能实例
 	FGameplayAbilitySpec* GetSpecFromAbilityTag(const FGameplayTag& AbilityTag);
 
@@ -110,7 +144,7 @@ public:
 	void ClientEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot);
 
 	//清除技能装配插槽中的技能
-	void ClearSlot(FGameplayAbilitySpec* Spec);
+	static void ClearSlot(FGameplayAbilitySpec* Spec);
 
 	//根据输入标签，清除技能装配插槽的技能
 	void ClearAbilitiesOfSlot(const FGameplayTag& Slot);

@@ -101,7 +101,7 @@ void UAureBeamSpell::StoreAdditionalTargets(TArray<AActor*>& OutAdditionalTarget
 		850.f,
 		MouseHitActor->GetActorLocation());
 
-	
+	//int32 NumAdditionalTargets = FMath::Min(GetAbilityLevel() - 1, MaxNumShockTargets);
 	int32 NumAdditionalTargets = 5;
 
 	//通过自定义函数来获取最近的几个目标
