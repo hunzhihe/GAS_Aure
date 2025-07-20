@@ -8,6 +8,7 @@
 #include "AureGameplayTags.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "AbilitySystem/Data/CharacterClassInfo.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 #include "Game/AureGameModeBase.h"
 #include "Interaction/CombatInterface.h"
@@ -347,6 +348,12 @@ FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const 
 
 	//设置攻击击退
 	SetKnockbackForce( EffectContexthandle, DamageEffectParams.KnockbackForce);
+
+	//设置范围伤害相关属性
+	SetIsRadialDamage(EffectContexthandle, DamageEffectParams.bIsRadialDamage);
+	SetRadialDamageOrigin(EffectContexthandle, DamageEffectParams.RadialDamageOrigin);
+	SetRadialDamageInnerRadius(EffectContexthandle, DamageEffectParams.RadialDamageInnerRadius);
+	SetRadialDamageOuterRadius(EffectContexthandle, DamageEffectParams.RadialDamageOuterRadius);
 		
 	// 创建一个游戏效果规范句柄，用于具体化伤害效果的配置，包括效果类、能力等级和上下文信息
 	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(
@@ -454,6 +461,168 @@ int32 UAuraAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* Worl
     // 将浮点数经验值奖励转换为整型并返回
     return static_cast<int32>(XPReward);
 
+}
+
+float UAuraAbilitySystemLibrary::ApplyRadialDamageWithFalloff(AActor* TargetActor, float BaseDamage,
+	float MinimumDamage, const FVector& Origin, float DamageInnerRadius, float DamageOuterRadius, float DamageFalloff,
+	AActor* DamageCauser, AController* InstigatedByController, ECollisionChannel DamagePreventionChannel)
+{
+	// 判断目标角色是否死亡
+	bool bIsDead = true;
+	if(TargetActor->Implements<UCombatInterface>())
+	{
+		bIsDead = ICombatInterface::Execute_IsDead(TargetActor);
+	}
+	if(bIsDead)
+	{
+		//如果角色已经死亡，直接返回0
+		return 0.f; 
+	}
+
+	// 获取目标角色所有组件
+	TArray<UActorComponent*> Components;
+	TargetActor->GetComponents(Components);
+
+	//判断攻击是能能够查看到目标
+	bool bIsDamageable = false;
+
+	//存储目标收到碰撞查询到的碰撞结果
+	TArray<FHitResult> HitList; 
+	for (UActorComponent* Comp : Components)
+	{
+		UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(Comp);
+		if (PrimitiveComp && PrimitiveComp->IsCollisionEnabled())
+		{
+			FHitResult Hit;
+			bIsDamageable = ComponentIsDamageableFrom(
+				PrimitiveComp, Origin, DamageCauser, {}, DamagePreventionChannel, Hit
+			);
+			HitList.Add(Hit);
+			if(bIsDamageable) break;
+		}
+	}
+
+	//应用目标的伤害值
+	float AppliedDamage = 0.f;
+
+	if (bIsDamageable)
+	{
+		// 创建伤害事件
+		FRadialDamageEvent DmgEvent;
+		DmgEvent.DamageTypeClass = TSubclassOf<UDamageType>(UDamageType::StaticClass());
+		DmgEvent.Origin = Origin;
+		DmgEvent.Params = FRadialDamageParams(BaseDamage, MinimumDamage, DamageInnerRadius, DamageOuterRadius, DamageFalloff);
+		DmgEvent.ComponentHits = HitList;
+		
+		// 应用伤害
+		AppliedDamage = TargetActor->TakeDamage(BaseDamage, DmgEvent, InstigatedByController, DamageCauser);
+	}
+
+	return AppliedDamage;
+
+}
+
+bool UAuraAbilitySystemLibrary::ComponentIsDamageableFrom(UPrimitiveComponent* VictimComp, FVector const& Origin,
+	AActor const* IgnoredActor, const TArray<AActor*>& IgnoreActors, ECollisionChannel TraceChannel,
+	FHitResult& OutHitResult)
+{
+	
+		// 配置碰撞查询参数，忽略指定的 Actor
+		FCollisionQueryParams LineParams(SCENE_QUERY_STAT(ComponentIsVisibleFrom), true, IgnoredActor);
+		LineParams.AddIgnoredActors( IgnoreActors );
+
+		// 获取组件所在世界的指针
+		UWorld* const World = VictimComp->GetWorld();
+		check(World);
+
+		// 使用组件的包围盒中心作为射线终点
+		FVector const TraceEnd = VictimComp->Bounds.Origin;
+		FVector TraceStart = Origin;
+		// 如果起点和终点重合，微调起点以避免提前退出
+		if (Origin == TraceEnd)
+		{
+			// 微调 Z 轴
+			TraceStart.Z += 0.01f;
+		}
+
+		// 只有当通道合法时才执行射线检测
+		if (TraceChannel != ECollisionChannel::ECC_MAX)
+		{
+			bool const bHadBlockingHit = World->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, TraceChannel, LineParams);
+			//::DrawDebugLine(World, TraceStart, TraceEnd, FLinearColor::Red, true);
+
+			// 如果有阻挡物，检查是否为目标组件
+			if (bHadBlockingHit)
+			{
+				if (OutHitResult.Component == VictimComp)
+				{
+					// 阻挡物是目标组件，返回 true
+					return true;
+				}
+				else
+				{
+					// 击中其他阻挡物，记录日志并返回 false
+					UE_LOG(LogDamage, Log, TEXT("Radial Damage to %s blocked by %s (%s)"), *GetNameSafe(VictimComp),
+						*OutHitResult.GetHitObjectHandle().GetName(), *GetNameSafe(OutHitResult.Component.Get()));
+					return false;
+				}
+			}
+		}
+		else
+		{
+			// 如果通道无效，输出警告
+			UE_LOG(LogDamage, Warning, TEXT("ECollisionChannel::ECC_MAX is not valid! No falloff is added to damage"));
+		}
+
+		// 未击中任何物体，构造一个伪造的 HitResult 假设击中组件中心
+		FVector const FakeHitLoc = VictimComp->GetComponentLocation();
+		FVector const FakeHitNorm = (Origin - FakeHitLoc).GetSafeNormal();		// 法线指向伤害源
+		OutHitResult = FHitResult(VictimComp->GetOwner(), VictimComp, FakeHitLoc, FakeHitNorm);
+		return true;
+}
+
+void UAuraAbilitySystemLibrary::SetIsRadialDamageEffectParams(FDamageEffectParams& DamageEffectParams, bool bIsRadial,
+	float InnerRadius, float OutRadius, FVector Origin)
+{
+	DamageEffectParams.bIsRadialDamage = bIsRadial;
+	DamageEffectParams.RadialDamageInnerRadius = InnerRadius;
+	DamageEffectParams.RadialDamageOuterRadius = OutRadius;
+	DamageEffectParams.RadialDamageOrigin = Origin;
+
+}
+
+void UAuraAbilitySystemLibrary::SetKnockbackDirection(FDamageEffectParams& DamageEffectParams,
+	FVector KnockbackDirection, float Magnitude)
+{
+	KnockbackDirection.Normalize();
+	if(Magnitude == 0.f)
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;
+	}
+	else
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * Magnitude;
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetDeathImpulseDirection(FDamageEffectParams& DamageEffectParams,
+	FVector ImpulseDirection, float Magnitude)
+{
+	ImpulseDirection.Normalize();
+	if(Magnitude == 0.f)
+	{
+		DamageEffectParams.DeathImpulse = ImpulseDirection * DamageEffectParams.DeathImpulseMagnitude;
+	}
+	else
+	{
+		DamageEffectParams.DeathImpulse = ImpulseDirection * Magnitude;
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetEffectParamsTargetASC(FDamageEffectParams& DamageEffectParams,
+	UAbilitySystemComponent* InASC)
+{
+	DamageEffectParams.TargetAbilitySystemComponent = InASC;
 }
 
 bool UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle)

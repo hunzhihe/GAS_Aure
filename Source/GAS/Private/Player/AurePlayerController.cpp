@@ -11,9 +11,12 @@
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
+#include "Actor/MagicCircle.h"
+#include "Components/DecalComponent.h"
 #include "Components/SplineComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "GAS/GAS.h"
 #include "Input/AureEnhancedInputComponent.h"
 #include "Interaction/HighlightInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
@@ -125,6 +128,25 @@ void AAurePlayerController::PlayerTick(float DeltaTime)
 	CursorTrace();
     //自动寻路
 	AutoRun();
+	//更新魔法阵位置
+	UpdateMagicCircleLocation();
+}
+
+void AAurePlayerController::ShowMagicCircle(UMaterialInterface* DecalMaterial)
+{
+	// 检查MagicCircle的有效性，如果无效，则在世界中生成一个新的MagicCircle实例
+	if(!IsValid(MagicCircle)) MagicCircle = GetWorld()->SpawnActor<AMagicCircle>(MagicCircleClass);
+	
+	// 如果DecalMaterial材质不为空，则将其应用到MagicCircle的MagicCircleDecal组件上
+	if (DecalMaterial != nullptr)
+	{
+	    MagicCircle->MagicCircleDecal->SetMaterial(0,DecalMaterial);
+	}
+}
+
+void AAurePlayerController::HideMagicCircle() const
+{
+	if(IsValid(MagicCircle)) MagicCircle->Destroy();
 }
 
 void AAurePlayerController::CursorTrace()
@@ -138,9 +160,11 @@ void AAurePlayerController::CursorTrace()
 		LastActor = nullptr;
 		return;
 	}
+	//如果当前鼠标处于魔法阵释放阶段，将忽略场景中的角色
+	const ECollisionChannel TraceChannel = IsValid(MagicCircle) ? ECC_EXCLUDEPLAYERS : ECC_Visibility;
 	
 	 // 获取光标下的命中结果
-	 GetHitResultUnderCursor( ECC_Visibility, false, CursorHit);
+	 GetHitResultUnderCursor( TraceChannel, false, CursorHit);
 	
 	// 如果光标命中结果没有阻挡命中，则返回
 	if (!CursorHit.bBlockingHit) return;
@@ -350,6 +374,16 @@ void AAurePlayerController::AutoRun()
 	    {
 	        bAutoRunning = false;
 	    }
+	}
+}
+
+void AAurePlayerController::UpdateMagicCircleLocation()
+{
+	// 检查魔法圈对象是否有效
+	if(IsValid(MagicCircle))
+	{
+	    // 设置魔法圈的当前位置为光标击中点的位置
+	    MagicCircle->SetActorLocation(CursorHit.ImpactPoint);
 	}
 }
 

@@ -92,8 +92,8 @@ void AAureProjectile::Destroyed()
 		LoopingSoundComponent->Stop();
 		LoopingSoundComponent->DestroyComponent();
 	}
-	// 如果没有命中目标且没有权限，则播放撞击声音
-	if (!bHit && !HasAuthority())
+	// 如果没有命中目标，则播放撞击声音
+	if (!bHit)
 	{
 	   OnHit();
 	}
@@ -126,7 +126,7 @@ void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
         }
 		
 		
-		// 对目标应用伤害
+		// 对目标应用伤害效果
 		if (UAbilitySystemComponent* TargetASC  = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
 		{
 			DamageEffectParams.TargetAbilitySystemComponent = TargetASC;

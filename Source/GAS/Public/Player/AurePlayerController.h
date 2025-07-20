@@ -8,6 +8,7 @@
 #include "Input/InputConfig.h"
 #include "AurePlayerController.generated.h"
 
+class AMagicCircle;
 class UDamageTextComponent;
 class USplineComponent;
 class UAureAbilitySystemComponent;
@@ -41,6 +42,15 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool IsBlockedHit, bool IsCriticalHit);
+
+	//显示魔法阵，设置光圈贴花材质
+	UFUNCTION(BlueprintCallable)
+	void ShowMagicCircle(UMaterialInterface* DecalMaterial);
+
+	//隐藏魔法阵，并销毁
+	UFUNCTION(BlueprintCallable)
+	void HideMagicCircle() const; 
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -129,5 +139,13 @@ private:
 	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
 	
 	/*伤害数字显示*/
-	
+
+    //创建魔法阵使用的类
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AMagicCircle> MagicCircleClass;
+    //存储魔法阵属性的智能指针
+	UPROPERTY()
+	TObjectPtr<AMagicCircle> MagicCircle;
+    //每帧更新魔法阵位置
+	void UpdateMagicCircleLocation();
 };

@@ -25,6 +25,18 @@ public:
 	// Sets default values for this character's properties
 	AAureBaseCharacter();
 	virtual void Tick(float DeltaTime) override;
+	/**
+	 * 覆写 应用伤害给自身
+	 * @see https://www.unrealengine.com/blog/damage-in-ue4
+	 * @param DamageAmount		要施加的伤害数值
+	 * @param DamageEvent		描述伤害细节的结构体，支持不同类型的伤害，如普通伤害、点伤害（FPointDamageEvent）、范围伤害（FRadialDamageEvent）等。
+	 * @param EventInstigator	负责造成伤害的 Controller，通常是玩家或 AI 的控制器。
+	 * @param DamageCauser		直接造成伤害的 Actor，例如爆炸物、子弹或掉落的石头。
+	 * @return					返回实际应用的伤害值。这允许目标修改或减少伤害，然后将最终的值返回。
+	 */
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -50,14 +62,17 @@ public:
 	virtual USkeletalMeshComponent* GetWeapon_Implementation() override;
 	virtual void SetIsBeingShocked_Implementation(bool bInShock) override;
 	virtual bool IsBeingShocked_Implementation() const override;
+	virtual FOnDamageSignature& GetOnDamageDelegate() override;
+
 	/** end Combat Interface */
 
 	//ASC注册成功委托
 	FOnASCRegistered OnASCRegistered;
 	//角色死亡后触发的死亡委托
 	FOnDeath OnDeath; 
-
-	
+    
+	//传入伤害后得到结果后的委托
+	FOnDamageSignature OnDamageDelegate;
 	
     // 参数NetMulticast表明，该函数将在服务器执行，然后复制到每个客户端，传输属性Reliable表明该函数应该以可靠方式发送数据
 	UFUNCTION(NetMulticast, Reliable)
@@ -68,16 +83,17 @@ public:
 	TArray<FTaggedMontage> AttackMontages;
 	
 
-
 	
 
 	//当前角色是否处于眩晕状态
 	UPROPERTY(ReplicatedUsing=OnRep_Stunned, BlueprintReadOnly)
 	bool bIsStunned = false;
 
+	//当前角色是否处于燃烧状态
 	UPROPERTY(ReplicatedUsing=OnRep_Burned, BlueprintReadOnly)
 	bool bIsBurned = false;
 
+	//当前角色是否处于被持续攻击状态（比如被闪电链攻击）
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsBeingShocked = false;
 
@@ -87,14 +103,7 @@ public:
 	UFUNCTION()
 	virtual void OnRep_Burned();
 
-	//注册用于监听负面标签变动的函数
-	void DeBuffRegisterChanged();
-	//眩晕标签变动后的回调
-	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
-	//当前角色的最大移动速度
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
-	float BaseWalkSpeed = 600.f;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -212,7 +221,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	USoundBase* DeathSound;
 
-	
+
+	//注册用于监听负面标签变动的函数
+	void DeBuffRegisterChanged();
+	//眩晕标签变动后的回调
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	//当前角色的最大移动速度
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
+	float BaseWalkSpeed = 600.f;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Abilities")

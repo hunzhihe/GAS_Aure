@@ -17,7 +17,7 @@ struct FAureGameplayTags;
 AAureBaseCharacter::AAureBaseCharacter()
 {
  	
-	// 禁用Actor的Tick功能，表示该Actor不需要每帧更新
+	// 禁用Actor的Tick功能，表示该Actor需要每帧更新
 	PrimaryActorTick.bCanEverTick = true;
 	
 	// 创建一个默认的USkeletalMeshComponent子对象，命名为"Weapon"
@@ -57,6 +57,15 @@ void AAureBaseCharacter::Tick(float DeltaTime)
 	//防止特效跟随人物旋转，每一帧更新修改旋转为默认
 	EffectAttachComponent->SetWorldRotation(FRotator::ZeroRotator);
 }
+
+float AAureBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	const float DamageTaken =  Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	OnDamageDelegate.Broadcast(DamageTaken);
+	return DamageTaken;
+}
+
 
 void AAureBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -180,6 +189,11 @@ void AAureBaseCharacter::SetIsBeingShocked_Implementation(bool bInShock)
 bool AAureBaseCharacter::IsBeingShocked_Implementation() const
 {
 	return bIsBeingShocked;
+}
+
+FOnDamageSignature& AAureBaseCharacter::GetOnDamageDelegate()
+{
+	return OnDamageDelegate;
 }
 
 

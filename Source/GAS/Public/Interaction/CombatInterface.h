@@ -14,6 +14,8 @@ class UNiagaraSystem;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*)
 //角色死亡委托
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeath, AActor*, DeadActor);
+//返回范围伤害能够对自身造成的伤害，在TakeDamage里广播
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamageSignature, float /*范围伤害造成的最终数值*/); 
 
 // 定义一个结构体FTaggedMontage，用于在蓝图中使用
 USTRUCT(BlueprintType)
@@ -139,5 +141,13 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetIsBeingShocked(bool bInShock);
+
+	/**
+	 * 获取角色受到伤害触发的委托，由于委托是创建在角色基类里的，这里可以通过添加struct来实现前向声明，不需要在头部声明一遍。
+	 * @return 委托
+	 */
+	virtual FOnDamageSignature& GetOnDamageDelegate() = 0; 
+
+
 	
 };

@@ -164,6 +164,27 @@ int32 AAureCharacter::GetSpellPoints_Implementation() const
 	return AurePlayerState->GetSpellPoints();
 }
 
+void AAureCharacter::ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial)
+{
+	if(AAurePlayerController* AurePlayerController = Cast<AAurePlayerController>(GetController()))
+	{
+		AurePlayerController->ShowMagicCircle(DecalMaterial);
+		//隐藏鼠标
+		AurePlayerController->bShowMouseCursor = false;
+	}
+	
+}
+
+void AAureCharacter::HideMagicCircle_Implementation() const
+{
+	if (AAurePlayerController* AurePlayerController = Cast<AAurePlayerController>(GetController()))
+	{
+		AurePlayerController->HideMagicCircle();
+		//显示鼠标
+		 AurePlayerController->bShowMouseCursor = true;
+	}
+}
+
 
 void AAureCharacter::InitAbilityActorInfo()
 {

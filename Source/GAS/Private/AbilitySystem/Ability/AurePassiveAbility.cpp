@@ -13,7 +13,8 @@ void UAurePassiveAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	//获取到ASC
-	if (UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
+	if (UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
 	{
 		//绑定技能取消回调
 		AureASC->DeactivatePassiveAbilityDelegate.AddUObject(this, &ThisClass::ReceiveDeactivate);

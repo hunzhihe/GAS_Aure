@@ -205,10 +205,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
 	static bool IsNotFriend(AActor* FirstActor, AActor* SecondActor);
 	
-    //通过技能生成的负面配置项应用技能负面效果
+	//通过技能生成的负面配置项应用技能负面效果
 	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|DamageEffect")
 	static FGameplayEffectContextHandle ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams);
-
+	
 
 	// 生成均匀分布的多端角度数组
 	// 
@@ -245,10 +245,69 @@ public:
 	//通过敌人类型和等级获取XP奖励
 	static int32 GetXPRewardForClassAndLevel(const UObject* WorldContextObject, ECharacterClass CharacterClass, int32 CharacterLevel);
 
-	/*---------GameplayEffectDebuff---------*/
-	
 
-	
+	/**
+ * 应用径向衰减伤害的函数
+ * 
+	* @param TargetActor - 需要计算攻击的目标
+	 * @param BaseDamage - 在伤害内半径（DamageInnerRadius）内应用的最大伤害值。
+	 * @param MinimumDamage - 在伤害外半径（DamageOuterRadius）处应用的最小伤害值。如果为0将不受伤害
+	 * @param Origin - 爆炸的原点（中心位置），即伤害的起点。
+	 * @param DamageInnerRadius - 全伤害半径：在该范围内的所有对象会受到最大伤害（BaseDamage）。
+	 * @param DamageOuterRadius - 最小伤害半径：在该范围之外的对象只会受到**MinimumDamage**。
+	 * @param DamageFalloff - 控制伤害递减的速率。值越高，伤害递减得越快。
+	 * @param DamageCauser - 伤害的直接来源，如爆炸的手雷或火箭弹。
+	 * @param InstigatedByController - 造成伤害的控制器，通常是执行该行为的玩家控制器。
+	 * @param DamagePreventionChannel - 阻挡伤害的通道。如果某个对象阻挡了该通道上的检测，则不会对目标应用伤害（如墙壁阻挡了视线）
+ * 
+ * @return 返回应用的伤害值
+ */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="RPGAbilitySystemLibrary|GameplayMechanics", meta=(WorldContext="WorldContextObject", AutoCreateRefTerm="IgnoreActors"))
+	static float ApplyRadialDamageWithFalloff(AActor* TargetActor, float BaseDamage, float MinimumDamage, const FVector& Origin,
+		float DamageInnerRadius, float DamageOuterRadius, float DamageFalloff, AActor* DamageCauser = NULL,
+		AController* InstigatedByController = NULL, ECollisionChannel DamagePreventionChannel = ECC_Visibility);
 
+	/** @RETURN 如果从 Origin 发出的武器射线击中了 VictimComp 组件，则返回 True。 OutHitResult 将包含击中的具体信息。 */
+	static bool ComponentIsDamageableFrom(UPrimitiveComponent* VictimComp, FVector const& Origin, AActor const* IgnoredActor,
+		const TArray<AActor*>& IgnoreActors, ECollisionChannel TraceChannel, FHitResult& OutHitResult);
+
+
+	/*
+	* Damage Effect Params
+	*/
+
+	/**
+		 * 修改伤害配置项，将其设置为具有范围伤害的配置项
+		 * @param DamageEffectParams 需要修改的配置项
+		 * @param bIsRadial 设置是否为范围伤害
+		 * @param InnerRadius 内半径
+		 * @param OutRadius 外半径
+		 * @param Origin 伤害中心
+		 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetIsRadialDamageEffectParams(UPARAM(ref) FDamageEffectParams& DamageEffectParams, bool bIsRadial, float InnerRadius, float OutRadius, FVector Origin);
+
+	/**
+	 * 修改伤害的冲击力的方向
+	 * @param DamageEffectParams 需要修改的伤害配置项
+	 * @param KnockbackDirection 攻击时触发击退的方向
+	 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetKnockbackDirection(UPARAM(ref) FDamageEffectParams& DamageEffectParams, FVector KnockbackDirection, float Magnitude = 0.f);
 	
+	/**
+	 * 修改伤害的冲击力的方向
+	 * @param DamageEffectParams 需要修改的伤害配置项
+	 * @param ImpulseDirection 死亡时触发击退的方向
+	 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetDeathImpulseDirection(UPARAM(ref) FDamageEffectParams& DamageEffectParams, FVector ImpulseDirection, float Magnitude = 0.f);
+
+	/**
+	 * 设置伤害配置应用目标ASC
+	 * @param DamageEffectParams 需要修改的伤害配置 
+	 * @param InASC 应用目标ASC
+	 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|GameplayEffects")
+	static void SetEffectParamsTargetASC(UPARAM(ref) FDamageEffectParams& DamageEffectParams, UAbilitySystemComponent* InASC);
 };
