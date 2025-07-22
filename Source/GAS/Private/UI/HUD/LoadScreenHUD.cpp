@@ -13,8 +13,9 @@ void ALoadScreenHUD::BeginPlay()
 
 	//实例化MVVM
 	LoadScreenViewModel = NewObject<UMVVM_LoadScreen>(this, LoadScreenViewModelClass);
+	LoadScreenViewModel->InitializeLoadSlots();
 	//测试代码
-	LoadScreenViewModel->SetWidgetName("WidgetName"); 
+	LoadScreenViewModel->SetWidgetName("MyAureWidgetName"); 
 
 	//创建用户控件并添加到视口
 	LoadScreenWidget = CreateWidget<ULoadScreenWidget>(GetWorld(), LoadScreenWidgetClass);
