@@ -43,6 +43,7 @@ void UMVVM_LoadScreen::LoadData()
 		
 		// 设置存档视图模型数据
 		Slot.Value->SetPlayerName(PlayerName);
+		Slot.Value->SetMapName(SaveGame->MapName);
 		Slot.Value->LoadSlotStatus = SaveSlotStatus;
 		
 		//调用视图模型初始化
@@ -61,8 +62,11 @@ void UMVVM_LoadScreen::NewSlotButtonPressed(int32 Slot, const FString& EnterName
 	AAureGameModeBase* GM = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
 	//修改MVVM上存储的角色名称
 	LoadSlots[Slot]->SetPlayerName(EnterName);
+	//修改地图名称
+	LoadSlots[Slot]->SetMapName(GM->DefaultMapName);
 	//修改进入界面为加载界面
 	LoadSlots[Slot]->LoadSlotStatus = Taken;
+	
 	//保存数据
 	GM->SaveSlotData(LoadSlots[Slot], Slot);
 	//初始化
@@ -76,7 +80,19 @@ void UMVVM_LoadScreen::NewGameButtonPressed(int32 Slot)
 
 void UMVVM_LoadScreen::SelectSlotButtonPressed(int32 Slot)
 {
-	
+	AAureGameModeBase* GM = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	GM->TravelToMap(LoadSlots[Slot]);
+}
+
+void UMVVM_LoadScreen::DeleteButtonPressed(int32 Slot)
+{
+	//删除存档
+	const AAureGameModeBase* GM = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	GM->DeleteSlotData(LoadSlots[Slot]->GetSlotName(), Slot);
+
+	//修改存档控件显示
+	LoadSlots[Slot]->LoadSlotStatus = Vacant;
+	LoadSlots[Slot]->InitializeSlot();
 }
 
 void UMVVM_LoadScreen::SetWidgetName(const FString& InSlotName)

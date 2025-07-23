@@ -13,6 +13,7 @@ void ALoadScreenHUD::BeginPlay()
 
 	//实例化MVVM
 	LoadScreenViewModel = NewObject<UMVVM_LoadScreen>(this, LoadScreenViewModelClass);
+	//初始化存档控件
 	LoadScreenViewModel->InitializeLoadSlots();
 	//测试代码
 	LoadScreenViewModel->SetWidgetName("MyAureWidgetName"); 
@@ -41,5 +42,7 @@ void ALoadScreenHUD::BeginPlay()
 
 	//创建完成用户控件后，调用用户控件函数
 	LoadScreenWidget->BlueprintInitializeWidget();
+    // 加载数据
+	LoadScreenViewModel->LoadData();
 
 }

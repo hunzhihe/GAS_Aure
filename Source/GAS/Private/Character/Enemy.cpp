@@ -28,6 +28,8 @@ AAureEnemy::AAureEnemy()
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>("HealthBar");
 	HealthBar->SetupAttachment(GetRootComponent());
 
+	BaseWalkSpeed =250;
+	
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;

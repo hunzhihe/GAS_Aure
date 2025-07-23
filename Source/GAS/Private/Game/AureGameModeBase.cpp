@@ -7,6 +7,15 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/MVVM/MVVM_LoadSlot.h"
 
+void AAureGameModeBase::TravelToMap(const UMVVM_LoadSlot* Slot)
+{
+	const FString SlotName = Slot->GetSlotName();
+	const int32 SlotIndex = Slot->SlotIndex;
+	
+	//打开地图
+	UGameplayStatics::OpenLevelBySoftObjectPtr(Slot, Maps.FindChecked(Slot->GetMapName()));
+}
+
 void AAureGameModeBase::PlayerDied(ACharacter* DeadCharacter)
 {
 }
@@ -24,10 +33,11 @@ void AAureGameModeBase::SaveSlotData(const UMVVM_LoadSlot* LoadSlot, int32 SlotI
 	ULocalScreenSaveGame* LocalScreenSaveGame = Cast<ULocalScreenSaveGame>(SaveGame);
 
 	//设置需要保存的数据
-	LocalScreenSaveGame->PlayerName = LoadSlot->GetSlotName();
+	LocalScreenSaveGame->PlayerName = LoadSlot->GetPlayerName();
 	LocalScreenSaveGame->SaveSlotStatus = ESaveSlotStatus::Taken;
 	LocalScreenSaveGame->SlotIndex = SlotIndex;
 	LocalScreenSaveGame->SlotName = LoadSlot->GetSlotName();
+	LocalScreenSaveGame->MapName = LoadSlot->GetMapName();
 
 	//保存
 	UGameplayStatics::SaveGameToSlot(LocalScreenSaveGame, LoadSlot->GetSlotName(), SlotIndex);
@@ -50,4 +60,21 @@ ULocalScreenSaveGame* AAureGameModeBase::GetSaveSlotData(const FString& SlotName
 
 	ULocalScreenSaveGame* LocalScreenSaveGame = Cast<ULocalScreenSaveGame>(SaveGame);
 	return LocalScreenSaveGame;
+}
+
+void AAureGameModeBase::DeleteSlotData(const FString& SlotName, int32 SlotIndex)
+{
+	//检查是否有对应名称的存档
+	if(UGameplayStatics::DoesSaveGameExist(SlotName, SlotIndex))
+	{
+		//删除已保存的存档
+		UGameplayStatics::DeleteGameInSlot(SlotName, SlotIndex);
+	}
+}
+
+void AAureGameModeBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Maps.Add(DefaultMapName, DefaultMap);
 }

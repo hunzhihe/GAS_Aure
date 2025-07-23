@@ -38,6 +38,12 @@ public:
 
 	void SetPlayerName(const FString& InPlayerName);
 	FString GetPlayerName() const { return PlayerName; };
+
+	void SetMapName(const FString& InMapName);
+	FString GetMapName() const { return MapName; };
+
+	void SetPlayerLevel(const int32 InPlayerLevel);
+	int32 GetPlayerLevel() const { return PlayerLevel; };
 private:
 	
 	//用户控件的名称
@@ -47,4 +53,11 @@ private:
 	//用户设置的角色名称
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter, meta=(AllowPrivateAccess))
 	FString PlayerName;
+
+	//存档对应的地图名称
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, FieldNotify, Setter, Getter, meta = (AllowPrivateAccess));
+	FString MapName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, FieldNotify, Setter, Getter, meta = (AllowPrivateAccess));
+	int32 PlayerLevel;
 };

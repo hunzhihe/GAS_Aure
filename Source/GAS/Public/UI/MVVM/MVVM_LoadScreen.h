@@ -39,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SelectSlotButtonPressed(int32 Slot);
 
+	//删除存档按下事件
+	UFUNCTION(BlueprintCallable)
+	void DeleteButtonPressed(int32 Slot);
+
 	
 	void SetWidgetName(const FString& InSlotName);
 	FString GetWidgetName() const { return WidgetName; };

@@ -26,13 +26,27 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Ability Info")
 	TObjectPtr<UAbilityInfo> AbilityInfo;
 
+	//初始地图名称
+	UPROPERTY(EditDefaultsOnly)
+	FString DefaultMapName;
+
+	//游戏初始地图
+	UPROPERTY(EditDefaultsOnly)
+	TSoftObjectPtr<UWorld> DefaultMap;
+
+	//地图名称和地图的映射
+	UPROPERTY(EditDefaultsOnly)
+	TMap<FString, TSoftObjectPtr<UWorld>> Maps;
+	
+	void TravelToMap(const UMVVM_LoadSlot* Slot);
+	
 	void PlayerDied(ACharacter* DeadCharacter);
 
 	/**
- * 创建新存档
- * @param LoadSlot 需要保存的视图模型示例
- * @param SlotIndex 存档索引
- */
+    * 创建新存档
+    * @param LoadSlot 需要保存的视图模型示例
+    * @param SlotIndex 存档索引
+    */
 	void SaveSlotData(const UMVVM_LoadSlot* LoadSlot, int32 SlotIndex) const;
 
 	/**
@@ -47,4 +61,13 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USaveGame> LocalScreenSaveGameClass;
 
+	/**
+	 * 删除存档
+	 * @param SlotName 需要删除存档对应的视图模型实例名称
+	 * @param SlotIndex 存档索引
+	 */
+	static void DeleteSlotData(const FString& SlotName, int32 SlotIndex);
+
+protected:
+	virtual void BeginPlay() override;
 };
