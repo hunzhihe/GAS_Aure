@@ -34,10 +34,20 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSoftObjectPtr<UWorld> DefaultMap;
 
+	//角色切换关卡后默认生成位置的PlayerStart的标签
+	UPROPERTY(EditDefaultsOnly)
+	FName DefaultPlayerStartTag;
+
+
+	//覆写父类的选择PlayerStart函数，修改为可以通过Tag获取生成位置
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+	
 	//地图名称和地图的映射
 	UPROPERTY(EditDefaultsOnly)
 	TMap<FString, TSoftObjectPtr<UWorld>> Maps;
-	
+
+	//跳转地图
 	void TravelToMap(const UMVVM_LoadSlot* Slot);
 	
 	void PlayerDied(ACharacter* DeadCharacter);
@@ -68,6 +78,20 @@ public:
 	 */
 	static void DeleteSlotData(const FString& SlotName, int32 SlotIndex);
 
+	//获取到当前游戏进行中所使用的存档数据
+	ULocalScreenSaveGame* RetrieveInGameSaveData() const;
+
+	/**
+	 * 保存游戏中的进度
+	 * @param SaveObject 需要保存的数据
+	 */
+	void SaveInGameProgressData(ULocalScreenSaveGame* SaveObject) const;
+	
+
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	//高亮已经激活的检查点
+	void HightLightEnableCheckpoints(TArray<AActor*> CheckPoints) const;
 };

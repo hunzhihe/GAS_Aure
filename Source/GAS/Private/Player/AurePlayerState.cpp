@@ -70,10 +70,10 @@ void AAurePlayerState::SetXP(int32 InXP)
 	OnXPChangedDelegate.Broadcast(XP);
 }
 
-void AAurePlayerState::SetLevel(int32 InLevel)
+void AAurePlayerState::SetLevel(int32 InLevel,const bool bLevelUp)
 {
 	Level = InLevel;
-	OnLevelChangedDelegate.Broadcast(Level,false);
+	OnLevelChangedDelegate.Broadcast(Level,bLevelUp);
 }
 
 void AAurePlayerState::SetAttributePoints(int32 InPoints)

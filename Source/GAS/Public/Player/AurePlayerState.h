@@ -19,6 +19,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32 /*StatValue*/)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnLevelChanged, int32 /*StatValue*/, bool /*bLevelUp*/)
 
 
+
 UCLASS()
 class GAS_API AAurePlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -45,7 +46,7 @@ public:
 	FOnLevelChanged OnLevelChangedDelegate;
 	FOnPlayerStatChanged OnAttributePointsChangedDelegate;
 	FOnPlayerStatChanged OnSpellPointsChangedDelegate;
-
+	
 
 	FORCEINLINE int32 GetPlayerLevel() const { return Level; }
 	FORCEINLINE int32 GetXP() const { return XP; }
@@ -65,7 +66,7 @@ public:
 	 * 设置相关属性
 	 */
 	void SetXP(int32 InXP);
-	void SetLevel(int32 InLevel);
+	void SetLevel(int32 InLevel , const bool bLevelUp);
 	void SetAttributePoints(int32 InPoints);
 	void SetSpellPoints(int32 InPoints);
 	

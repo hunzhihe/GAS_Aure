@@ -3,6 +3,7 @@
 
 #include "UI/MVVM/MVVM_LoadScreen.h"
 
+#include "Game/AureGameInstance.h"
 #include "Game/AureGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/MVVM/MVVM_LoadSlot.h"
@@ -45,6 +46,8 @@ void UMVVM_LoadScreen::LoadData()
 		Slot.Value->SetPlayerName(PlayerName);
 		Slot.Value->SetMapName(SaveGame->MapName);
 		Slot.Value->LoadSlotStatus = SaveSlotStatus;
+		Slot.Value->PlayerStartTag = SaveGame->PlayerStartTag;
+		Slot.Value->SetPlayerLevel(SaveGame->PlayerLevel); 
 		
 		//调用视图模型初始化
 		Slot.Value->InitializeSlot();
@@ -66,6 +69,11 @@ void UMVVM_LoadScreen::NewSlotButtonPressed(int32 Slot, const FString& EnterName
 	LoadSlots[Slot]->SetMapName(GM->DefaultMapName);
 	//修改进入界面为加载界面
 	LoadSlots[Slot]->LoadSlotStatus = Taken;
+	//存储关卡生成点
+	LoadSlots[Slot]->PlayerStartTag = GM->DefaultPlayerStartTag;
+    //修改角色等级
+	LoadSlots[Slot]->SetPlayerLevel(1);
+	
 	
 	//保存数据
 	GM->SaveSlotData(LoadSlots[Slot], Slot);
@@ -81,6 +89,15 @@ void UMVVM_LoadScreen::NewGameButtonPressed(int32 Slot)
 void UMVVM_LoadScreen::SelectSlotButtonPressed(int32 Slot)
 {
 	AAureGameModeBase* GM = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+
+	//设置全局数据，方便后续使用
+	UAureGameInstance* AureGameInstance = Cast<UAureGameInstance>(GM->GetGameInstance());
+	AureGameInstance->LoadSlotName = LoadSlots[Slot]->GetSlotName();
+	AureGameInstance->LoadSlotIndex = LoadSlots[Slot]->SlotIndex;
+	AureGameInstance->PlayerStartTag = LoadSlots[Slot]->PlayerStartTag;
+	
+
+	//进入场景
 	GM->TravelToMap(LoadSlots[Slot]);
 }
 

@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "PlayerInterface.generated.h"
 
+class UGameplayEffect;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UPlayerInterface : public UInterface
@@ -74,5 +75,18 @@ public:
 
 	//隐藏魔法阵，并销毁
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void HideMagicCircle() const; 
+	void HideMagicCircle() const;
+
+	//保存游戏进度
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SaveProgress(const FName& CheckpointTag);
+
+	//获取角色使用的次级属性GameplayEffect
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	TSubclassOf<UGameplayEffect> GetSecondaryAttributes();
+
+	//获取角色使用的额外属性GameplayEffect
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	TSubclassOf<UGameplayEffect> GetVitalAttributes();
+	
 };

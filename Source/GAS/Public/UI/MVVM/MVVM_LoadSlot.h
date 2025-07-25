@@ -25,6 +25,10 @@ public:
 
 	void InitializeSlot() const;
 
+	//存储玩家关卡出生位置的标签
+	UPROPERTY()
+	FName PlayerStartTag;
+
 	//当前视图模型的索引，对应存档的索引
 	UPROPERTY()
 	int32 SlotIndex;
@@ -60,4 +64,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, FieldNotify, Setter, Getter, meta = (AllowPrivateAccess));
 	int32 PlayerLevel;
+
+
 };

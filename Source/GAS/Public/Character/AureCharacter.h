@@ -4,7 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "AureBaseCharacter.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
+#include "Game/AureGameModeBase.h"
+#include "Game/LocalScreenSaveGame.h"
 #include "Interaction/PlayerInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/AurePlayerState.h"
 #include "AureCharacter.generated.h"
 
 class UNiagaraComponent;
@@ -45,6 +50,10 @@ public:
 	virtual int32 GetSpellPoints_Implementation() const override;
 	virtual void ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial) override;
 	virtual void HideMagicCircle_Implementation() const override;
+	virtual void SaveProgress_Implementation(const FName& CheckpointTag) override;
+	virtual TSubclassOf<UGameplayEffect> GetSecondaryAttributes_Implementation() override;
+	virtual TSubclassOf<UGameplayEffect> GetVitalAttributes_Implementation() override;
+	
 	/* IPlayerInterface玩家接口 结束 */
 
 	UPROPERTY(EditDefaultsOnly)
@@ -54,7 +63,10 @@ public:
 
 	// 等级提升特效
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent; 
+	TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
+
+	//角色加载存档保存的数值
+	void LoadProgress();
 
 private:
 

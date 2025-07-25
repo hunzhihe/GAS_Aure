@@ -7,9 +7,11 @@
 #include "BlueprintAssetNodeSpawner.h"
 #include "NiagaraComponent.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
+#include "AbilitySystem/AureAttributeSet.h"
 #include "AbilitySystem/Data/LevelUpInfo.h"
 #include "Camera/CameraComponent.h"
 #include "Game/AureGameModeBase.h"
+#include "Game/LocalScreenSaveGame.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -60,8 +62,12 @@ void AAureCharacter::PossessedBy(AController* NewController)
 	//初始化ASC的ownerActor和AvatarActor
 	InitAbilityActorInfo();
 
+
+	//加载存档
+	LoadProgress();
+	
 	//初始化角色技能
-	AddCharacterAbilities();
+	//AddCharacterAbilities();
 }
 
 void AAureCharacter::OnRep_PlayerState()
@@ -185,6 +191,90 @@ void AAureCharacter::HideMagicCircle_Implementation() const
 	}
 }
 
+void AAureCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
+{
+	if(const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
+	{
+		//获取存档
+		ULocalScreenSaveGame* SaveGameData = GameMode->RetrieveInGameSaveData();
+		if(SaveGameData == nullptr) return;
+		
+		//修改存档数据
+		SaveGameData->PlayerStartTag = CheckpointTag;
+		//将检查点添加到已激活数组，（并去重）
+		SaveGameData->ActivatedPlayerStartTags.AddUnique(CheckpointTag);
+
+		//修改玩家相关
+		if (const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>())
+		{
+			SaveGameData->XP = AurePlayerState->GetXP();
+			SaveGameData->PlayerLevel = AurePlayerState->GetPlayerLevel();
+			SaveGameData->AttributePoints = AurePlayerState->GetAttributePoints();
+			SaveGameData->SpellPoints = AurePlayerState->GetSpellPoints();
+		}
+
+		//修改主要属性
+		SaveGameData->Strength = UAureAttributeSet::GetStrengthAttribute().GetNumericValue(GetAttributeSet());
+		SaveGameData->Intelligence = UAureAttributeSet::GetIntelligenceAttribute().GetNumericValue(GetAttributeSet());
+		SaveGameData->Vigor = UAureAttributeSet::GetVigorAttribute().GetNumericValue(GetAttributeSet());
+		SaveGameData->Resilience = UAureAttributeSet::GetResilienceAttribute().GetNumericValue(GetAttributeSet());
+
+
+        SaveGameData->bFirstTimeLoadIn = false;
+		
+		//保存存档
+		GameMode->SaveInGameProgressData(SaveGameData);
+	}
+	
+}
+
+TSubclassOf<UGameplayEffect> AAureCharacter::GetSecondaryAttributes_Implementation()
+{
+	return DefaultSecondaryAttributes;
+}
+
+TSubclassOf<UGameplayEffect> AAureCharacter::GetVitalAttributes_Implementation()
+{
+	return DefaultVitalAttributes;
+}
+
+
+void AAureCharacter::LoadProgress() 
+{
+	if(const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
+	{
+		//获取存档
+		ULocalScreenSaveGame* SaveGameData = GameMode->RetrieveInGameSaveData();
+		if(SaveGameData == nullptr) return;
+
+		//修改玩家相关
+		if(AAurePlayerState* AurePlayerState = Cast<AAurePlayerState>(GetPlayerState()))
+		{
+			AurePlayerState->SetLevel(SaveGameData->PlayerLevel,false);
+			AurePlayerState->SetXP(SaveGameData->XP);
+			AurePlayerState->SetAttributePoints(SaveGameData->AttributePoints);
+			AurePlayerState->SetSpellPoints(SaveGameData->SpellPoints);
+		}
+
+		//判断是否为第一次加载存档，如果第一次，属性没有相关内容
+		if(SaveGameData->bFirstTimeLoadIn)
+		{
+			//如果第一次加载存档，使用默认GE初始化主要属性
+			InitializeDefaultAttributes();
+
+			//初始化角色技能
+			AddCharacterAbilities();
+		}
+		else
+		{
+			//如果不是第一次，将通过函数库函数通过存档数据初始化角色属性
+			UAuraAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(this, AbilitySystemComponent, SaveGameData);
+
+			//初始化角色技能 TODO：还未实现通过存档获取保存的技能，现在测试使用。
+			AddCharacterAbilities();
+		}
+	}
+}
 
 void AAureCharacter::InitAbilityActorInfo()
 {
@@ -215,7 +305,7 @@ void AAureCharacter::InitAbilityActorInfo()
 	 }
 
 	//通过GE初始化角色主要属性
-	  InitializeDefaultAttributes();
+	 // InitializeDefaultAttributes();
 
 	//调用ASC广播
 	OnASCRegistered.Broadcast(AbilitySystemComponent);
