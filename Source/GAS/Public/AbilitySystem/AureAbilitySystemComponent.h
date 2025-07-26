@@ -7,9 +7,7 @@
 #include "AureAbilitySystemComponent.generated.h"
 
 
-
-
-
+class ULocalScreenSaveGame;
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /* AssetTags */)
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FAbilityStatusChanged, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/,int32);
 DECLARE_MULTICAST_DELEGATE_FourParams(FAbilityEquipped, const FGameplayTag& /*技能标签*/, const FGameplayTag& /*技能状态标签*/, const FGameplayTag& /*输入标签*/, const FGameplayTag& /*上一个输入标签*/);
@@ -51,6 +49,9 @@ public:
 	//被动技能对应特效委托
 	FActivePassiveEffect ActivatePassiveEffect;
 
+
+	//通过存档数据设置角色技能的函数
+	void AddCharacterAbilitiesFromSaveData(ULocalScreenSaveGame* SaveData);
 	//添加角色技能
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
 	//添加角色被动技能

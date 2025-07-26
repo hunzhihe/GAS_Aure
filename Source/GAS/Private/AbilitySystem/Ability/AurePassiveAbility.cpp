@@ -24,7 +24,8 @@ void UAurePassiveAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 void UAurePassiveAbility::ReceiveDeactivate(const FGameplayTag& AbilityTag)
 {
 	//判断技能标签容器里是否包含此标签
-	if (AbilityTags.HasTagExact(AbilityTag))
+	FGameplayTagContainer Tags;
+	if (Tags.HasTagExact(AbilityTag))
 	{
 		EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
 	}

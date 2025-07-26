@@ -8,6 +8,7 @@
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/Ability/AureGameplayAbility.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
+#include "Game/LocalScreenSaveGame.h"
 #include "GAS/AureLogChannels.h"
 #include "Interaction/PlayerInterface.h"
 
@@ -28,6 +29,45 @@ void UAureAbilitySystemComponent::OnRep_ActivateAbilities()
 		bStartupAbilitiesGiven = true;
 		AbilitiesGivenDelegate.Broadcast();
 	}
+}
+
+void UAureAbilitySystemComponent::AddCharacterAbilitiesFromSaveData(ULocalScreenSaveGame* SaveData)
+{
+	for(const FSavedAbility& Data : SaveData->SavedAbilities)
+	{
+		const TSubclassOf<UGameplayAbility> LoadedAbilityClass = Data.GameplayAbility;
+
+		FGameplayAbilitySpec LoadedAbilitySpec = FGameplayAbilitySpec(LoadedAbilityClass, Data.AbilityLevel);
+		//设置技能激活输入标签
+		LoadedAbilitySpec.GetDynamicSpecSourceTags().AddTag(Data.AbilityInputTag);
+		//设置技能状态标签
+		LoadedAbilitySpec.GetDynamicSpecSourceTags().AddTag(Data.AbilityStatus); 
+
+		//主动技能的处理
+		if(Data.AbilityType == FAureGameplayTags::Get().Abilities_Type_Offensive)
+		{
+			GiveAbility(LoadedAbilitySpec); //只应用不激活
+		}
+		//被动技能的处理
+		else if(Data.AbilityType == FAureGameplayTags::Get().Abilities_Type_Passive)
+		{
+			//确保技能已经装配
+			if(Data.AbilityStatus.MatchesTagExact(FAureGameplayTags::Get().Abilities_Status_Equipped))
+			{
+				//应用技能并激活
+				GiveAbilityAndActivateOnce(LoadedAbilitySpec); 
+			}
+			else
+			{
+				//只应用不激活
+				GiveAbility(LoadedAbilitySpec); 
+			}
+		}
+	}
+
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast();
+	
 }
 
 void UAureAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities)

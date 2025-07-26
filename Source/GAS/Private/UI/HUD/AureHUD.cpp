@@ -76,9 +76,19 @@ void AAureHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySyst
 
 	//控制器参数结构体
 	const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
-	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);//获取控制器层
+	//获取控制器层
+	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
 
-	OverlayWidget->SetWidgetController(WidgetController);//设置用户控件的控制器层
-	OverlayWidgetController->BroadcastInitialValues();//广播初始值
-	Widget->AddToViewport();//添加到视口
+    //初始化所有控制器
+	GetAttributeMenuWidgetController(WidgetControllerParams);
+	GetSpellMenuWidgetController(WidgetControllerParams);
+
+	
+
+	//设置用户控件的控制器层
+	OverlayWidget->SetWidgetController(WidgetController);
+	//广播初始值
+	OverlayWidgetController->BroadcastInitialValues();
+	//添加到视口
+	Widget->AddToViewport();
 }

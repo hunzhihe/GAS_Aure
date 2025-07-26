@@ -4,7 +4,9 @@
 #include "Checkpoints/CheckPoint.h"
 #include "GameFramework/PlayerStart.h"
 #include "Components/SphereComponent.h"
+#include "Game/AureGameModeBase.h"
 #include "Interaction/PlayerInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 ACheckPoint::ACheckPoint(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
@@ -40,6 +42,16 @@ void ACheckPoint::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	//if(OtherActor->ActorHasTag("Player")) //如果只需要判断是不是玩家角色通过标签判断即可
 	if(OtherActor->Implements<UPlayerInterface>())
 	{
+		//检测点已被激活
+		bReached = true;
+
+		if(AAureGameModeBase* AureGameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		{
+			//保存场景状态
+			AureGameMode->SaveWorldState(GetWorld());
+		}
+		
+		
 		//修改存档当的检测点
 		IPlayerInterface::Execute_SaveProgress(OtherActor, PlayerStartTag);
 		
@@ -47,6 +59,14 @@ void ACheckPoint::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		HandleGlowEffects();
 	}
 	
+}
+
+void ACheckPoint::LoadActor_Implementation()
+{
+	if (!bReached)
+	{
+		HandleGlowEffects();
+	}
 }
 
 void ACheckPoint::HandleGlowEffects()

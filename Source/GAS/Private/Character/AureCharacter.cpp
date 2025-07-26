@@ -65,6 +65,11 @@ void AAureCharacter::PossessedBy(AController* NewController)
 
 	//加载存档
 	LoadProgress();
+
+	if (AAureGameModeBase* AureGameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
+	{
+		AureGameMode->LoadWorldState(GetWorld());
+	}
 	
 	//初始化角色技能
 	//AddCharacterAbilities();
@@ -221,6 +226,40 @@ void AAureCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
 
 
         SaveGameData->bFirstTimeLoadIn = false;
+
+		if (!HasAuthority())
+		{
+			return;
+		}
+
+		UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(GetAbilitySystemComponent());
+		//将存档内的技能数组清空
+		SaveGameData->SavedAbilities.Empty();
+
+		//使用ASC里创建的ForEach函数循环获取角色的技能，并生成技能结构体保存
+		FForEachAbility SaveAbilityDelegate;
+		SaveAbilityDelegate.BindLambda([this,AureASC,SaveGameData](const FGameplayAbilitySpec& AbilitySpec)
+		{
+			//获取技能标签和技能数据
+			FGameplayTag AbilityTag = UAureAbilitySystemComponent::GetAbilityTagFromSpec(AbilitySpec);
+			UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo( this);
+			FAureAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+
+			//创建技能结构体
+			FSavedAbility SavedAbility;
+			SavedAbility.GameplayAbility = Info.Ability;
+			SavedAbility.AbilityTag = AbilityTag;
+			SavedAbility.AbilityType = Info.AbilityType;
+			SavedAbility.AbilityInputTag = AureASC->GetInputTagFromSpec(AbilitySpec);
+			SavedAbility.AbilityStatus = AureASC->GetStatusFromSpec(AbilitySpec);
+			SavedAbility.AbilityLevel = AbilitySpec.Level;
+
+
+			SaveGameData->SavedAbilities.AddUnique(SavedAbility);
+		});
+
+		//调用ForEach技能来执行存储到存档
+		AureASC->ForEachAbility(SaveAbilityDelegate);
 		
 		//保存存档
 		GameMode->SaveInGameProgressData(SaveGameData);
@@ -270,8 +309,14 @@ void AAureCharacter::LoadProgress()
 			//如果不是第一次，将通过函数库函数通过存档数据初始化角色属性
 			UAuraAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(this, AbilitySystemComponent, SaveGameData);
 
-			//初始化角色技能 TODO：还未实现通过存档获取保存的技能，现在测试使用。
-			AddCharacterAbilities();
+			//初始化角色技能
+			if (UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(AbilitySystemComponent))
+			{
+				AureASC->AddCharacterAbilitiesFromSaveData(SaveGameData);
+			}
+
+			//从存档中读取关卡状态
+			GameMode->LoadWorldState(GetWorld());
 		}
 	}
 }

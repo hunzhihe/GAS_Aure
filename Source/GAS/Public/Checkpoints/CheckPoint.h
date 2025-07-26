@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerStart.h"
+#include "Interaction/SaveInterface.h"
 #include "CheckPoint.generated.h"
 
 class USphereComponent;
@@ -11,7 +12,7 @@ class USphereComponent;
  * 
  */
 UCLASS()
-class GAS_API ACheckPoint : public APlayerStart
+class GAS_API ACheckPoint : public APlayerStart, public ISaveInterface
 {
 	GENERATED_BODY()
 public:
@@ -45,7 +46,20 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void CheckpointReached(UMaterialInstanceDynamic* DynamicMaterialInstance);
 
+	/*   Save Interface   */
+
+	//是否需要修改变换，检查点不需要
+	virtual bool ShouldLoadTransform_Implementation() override { return false; }
+	//通过存档二进制修改Actor数据后，更新Actor
+	virtual void LoadActor_Implementation() override; 
+
 	
+	/*   End Save Interface   */
+
+
+	//当前检查点是否已经被激活，设置SaveGame表示该值将会被存储到存档文件中
+	UPROPERTY(BlueprintReadOnly, SaveGame)
+	bool bReached = false;
 
 private:
 
