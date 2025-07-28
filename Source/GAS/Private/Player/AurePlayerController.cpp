@@ -18,6 +18,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "GAS/GAS.h"
 #include "Input/AureEnhancedInputComponent.h"
+#include "Interaction/EnemyInterface.h"
 #include "Interaction/HighlightInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
 
@@ -225,7 +226,26 @@ void AAurePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 	}
 	if(InputTag.MatchesTagExact(FAureGameplayTags::Get().InputTag_LMB))
 	{
-		bTargeting = ThisActor != nullptr; //ThisActor为鼠标悬停在敌人身上才会有值
+		//ThisActor为鼠标悬停在敌人身上才会有值
+		if(IsValid(ThisActor))
+		{
+			if(ThisActor->Implements<UEnemyInterface>())
+			{
+				//继承敌人接口，目标为敌人
+				TargetingStatus = ETargetingStatus::TargetingEnemy;
+			}
+			else
+			{
+				//无敌人接口，基本为场景静态物体
+				TargetingStatus = ETargetingStatus::TargetingNonEnemy;
+			}
+		}
+		else
+		{
+			//目标不存在，设置为无目标状态
+			TargetingStatus = ETargetingStatus::NotTargeting;
+		}
+		
 		bAutoRunning = false;
 		FollowTime = 0.f; //重置统计的时间
 	}
@@ -255,17 +275,16 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	    return;
 	}
 
-	// 获取当前控制的Pawn
-	const APawn* ControlledPawn = GetPawn();
+	// 如果存在能力系统组件(ASC)，则调用其AbilityInputTagReleased方法
+	if(GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
+	
 	
 	// 如果当前处于目标锁定状态
-	if(bTargeting)
+	if(TargetingStatus != ETargetingStatus::TargetingEnemy && !bShiftKeyDown)
 	{
-	    // 如果存在能力系统组件(ASC)，则调用其AbilityInputTagReleased方法
-	    if(GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
-	}
-	else
-	{
+
+		// 获取当前控制的Pawn
+		const APawn* ControlledPawn = GetPawn();
 	   
 	    // 检查FollowTime是否小于短按阈值且ControlledPawn存在
 	    if(FollowTime <= ShortPressThreshold && ControlledPawn)
@@ -315,7 +334,7 @@ void AAurePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	APawn* ControlledPawn = GetPawn();
 	
 	// 根据是否处于目标锁定状态执行不同的逻辑
-	if(bTargeting||bShiftKeyDown)
+	if(TargetingStatus == ETargetingStatus::TargetingEnemy||bShiftKeyDown)
 	{
 	    // 如果处于目标锁定状态且存在ASC，则调用其AbilityInputTagHeld方法
 	    if(GetASC()) GetASC()->AbilityInputTagHeld(InputTag);

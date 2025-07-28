@@ -19,13 +19,21 @@ ACheckPoint::ACheckPoint(const FObjectInitializer& ObjectInitializer): Super(Obj
 	CheckpointMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); //设置查询并产生物理
 	CheckpointMesh->SetCollisionResponseToChannels(ECR_Block); //设置阻挡所有物体与其重叠
 
+	//设置自定义深度值
+	CheckpointMesh->SetCustomDepthStencilValue(CustomDepthStencilOverride);
+	CheckpointMesh->MarkRenderStateDirty();
+
+
 	//设置球碰撞体
 	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
 	Sphere->SetupAttachment(CheckpointMesh);
 	Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //设置其只用作查询使用
 	Sphere->SetCollisionResponseToChannels(ECR_Ignore); //设置其忽略所有碰撞检测
 	Sphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); //设置其与Pawn类型物体产生重叠事件
-	
+
+    //设置移动终点
+	MoveToComponent = CreateDefaultSubobject<USceneComponent>("MoveToComponent");
+	MoveToComponent->SetupAttachment(GetRootComponent());
 }
 
 void ACheckPoint::BeginPlay()
@@ -51,20 +59,37 @@ void ACheckPoint::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 			AureGameMode->SaveWorldState(GetWorld());
 		}
 		
-		
 		//修改存档当的检测点
 		IPlayerInterface::Execute_SaveProgress(OtherActor, PlayerStartTag);
 		
 		//如果与碰撞体重叠的是
 		HandleGlowEffects();
 	}
-	
+}
+
+void ACheckPoint::SetMoveToLocation_Implementation(FVector& OutDestination)
+{
+	OutDestination = MoveToComponent->GetComponentLocation();
+}
+
+void ACheckPoint::HighlightActor_Implementation()
+{
+	if (bReached)
+	{
+		CheckpointMesh->SetRenderCustomDepth(true);
+	}
+}
+
+void ACheckPoint::UnHighlightActor_Implementation()
+{
+	CheckpointMesh->SetRenderCustomDepth(false);
 }
 
 void ACheckPoint::LoadActor_Implementation()
 {
-	if (!bReached)
+	if (bReached)
 	{
+		CheckpointMesh->SetMaterial(0, CheckpointMaterial);
 		HandleGlowEffects();
 	}
 }
@@ -73,10 +98,11 @@ void ACheckPoint::HandleGlowEffects()
 {
 	//取消碰撞检查
 	Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	//创建一个新材质实例，修改效果
-	UMaterialInstanceDynamic* DynamicMaterialInstance = UMaterialInstanceDynamic::Create(CheckpointMesh->GetMaterial(0), this);
-	CheckpointMesh->SetMaterial(0, DynamicMaterialInstance);
-	CheckpointReached(DynamicMaterialInstance); //触发检查点修改材质后的回调
 	
+	//创建一个新材质实例，修改效果
+	UMaterialInstanceDynamic* DynamicMaterialInstance = UMaterialInstanceDynamic::Create(CheckpointMaterial, this);
+	check(DynamicMaterialInstance);
+	CheckpointMesh->SetMaterial(0, DynamicMaterialInstance);
+	//触发检查点修改材质后的回调
+	CheckpointReached(DynamicMaterialInstance); 
 }

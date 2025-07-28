@@ -121,7 +121,7 @@ private:
 	// 自动运行标志，初始化为false，表示是否处于自动运行状态
 	bool bAutoRunning = false;
     //当前目标是否为敌人
-	bool bTargeting = false;
+	ETargetingStatus TargetingStatus = ETargetingStatus::NotTargeting;
 
 
 	//当小于该距离时，关闭自动寻路

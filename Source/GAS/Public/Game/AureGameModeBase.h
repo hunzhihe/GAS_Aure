@@ -98,5 +98,5 @@ protected:
 
 private:
 	//高亮已经激活的检查点
-	void HightLightEnableCheckpoints(TArray<AActor*> CheckPoints) const;
+	//void HightLightEnableCheckpoints(TArray<AActor*> CheckPoints) const;
 };

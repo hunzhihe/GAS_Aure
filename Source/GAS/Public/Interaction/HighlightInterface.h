@@ -29,4 +29,7 @@ public:
 	// 定义一个蓝图原生事件，用于取消高亮显示一个演员（Actor）
 	UFUNCTION(BlueprintNativeEvent)
 	void UnHighlightActor();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetMoveToLocation(FVector& OutDestination);
 };

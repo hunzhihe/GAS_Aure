@@ -22,7 +22,7 @@ AActor* AAureGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), Actors);
 
 	//已激活的检查点高亮
-	HightLightEnableCheckpoints(Actors);
+	//HightLightEnableCheckpoints(Actors);
 	
 	if(Actors.Num() > 0)
 	{
@@ -84,7 +84,7 @@ void AAureGameModeBase::SaveSlotData(const UMVVM_LoadSlot* LoadSlot, int32 SlotI
 
 ULocalScreenSaveGame* AAureGameModeBase::GetSaveSlotData(const FString& SlotName, int32 SlotIndex) const
 {
-	USaveGame* SaveGame;
+	USaveGame* SaveGame = nullptr;
 	//检查是否有对应名称的存档
 	if (UGameplayStatics::DoesSaveGameExist(SlotName, SlotIndex))
 	{
@@ -148,7 +148,8 @@ void AAureGameModeBase::SaveWorldState(UWorld* World) const
 	
 	//获取到游戏实例
 	UAureGameInstance* AureGameInstance = Cast<UAureGameInstance>(GetGameInstance());
-
+    check(AureGameInstance);
+	
 	//获取存档
 	if (ULocalScreenSaveGame* SaveGameData = GetSaveSlotData(AureGameInstance->LoadSlotName, AureGameInstance->LoadSlotIndex))
 	{
@@ -270,24 +271,24 @@ void AAureGameModeBase::BeginPlay()
 	Maps.Add(DefaultMapName, DefaultMap);
 }
 
-void AAureGameModeBase::HightLightEnableCheckpoints(TArray<AActor*> CheckPoints) const
-{
-	//获取存档
-	ULocalScreenSaveGame* SaveGameData = RetrieveInGameSaveData();
-	if (SaveGameData == nullptr)
-	{
-		return;
-	}
-
-	//遍历地图内的所有检查点，如果数组存在，将高亮显示
-	for (AActor* Actor : CheckPoints)
-	{
-		if (ACheckPoint* CheckPoint = Cast<ACheckPoint>(Actor))
-		{
-			if (SaveGameData->ActivatedPlayerStartTags.Contains(CheckPoint->PlayerStartTag))
-			{
-				CheckPoint->HandleGlowEffects();
-			}
-		}
-	}
-}
+// void AAureGameModeBase::HightLightEnableCheckpoints(TArray<AActor*> CheckPoints) const
+// {
+// 	//获取存档
+// 	ULocalScreenSaveGame* SaveGameData = RetrieveInGameSaveData();
+// 	if (SaveGameData == nullptr)
+// 	{
+// 		return;
+// 	}
+//
+// 	//遍历地图内的所有检查点，如果数组存在，将高亮显示
+// 	for (AActor* Actor : CheckPoints)
+// 	{
+// 		if (ACheckPoint* CheckPoint = Cast<ACheckPoint>(Actor))
+// 		{
+// 			if (SaveGameData->ActivatedPlayerStartTags.Contains(CheckPoint->PlayerStartTag))
+// 			{
+// 				CheckPoint->HandleGlowEffects();
+// 			}
+// 		}
+// 	}
+// }
