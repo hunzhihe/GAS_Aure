@@ -82,6 +82,11 @@ void AAureEnemy::UnHighlightActor_Implementation()
 	Weapon->SetRenderCustomDepth(false);
 }
 
+void AAureEnemy::SetMoveToLocation_Implementation(FVector& OutDestination)
+{
+	//敌人类,不必修改移动位置
+}
+
 int32 AAureEnemy::GetPlayerLevel_Implementation()
 {
 	return Level;

@@ -18,12 +18,11 @@ ACheckPoint::ACheckPoint(const FObjectInitializer& ObjectInitializer): Super(Obj
 	CheckpointMesh->SetupAttachment(GetRootComponent());
 	CheckpointMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); //设置查询并产生物理
 	CheckpointMesh->SetCollisionResponseToChannels(ECR_Block); //设置阻挡所有物体与其重叠
-
+	
 	//设置自定义深度值
 	CheckpointMesh->SetCustomDepthStencilValue(CustomDepthStencilOverride);
-	CheckpointMesh->MarkRenderStateDirty();
-
-
+	CheckpointMesh->MarkRenderStateDirty();//该函数作用：修改了材质，顶点，渲染可见性后，可以将其延后到帧结束，提交数据，下一帧更新，提升性能。
+	
 	//设置球碰撞体
 	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
 	Sphere->SetupAttachment(CheckpointMesh);
@@ -31,7 +30,7 @@ ACheckPoint::ACheckPoint(const FObjectInitializer& ObjectInitializer): Super(Obj
 	Sphere->SetCollisionResponseToChannels(ECR_Ignore); //设置其忽略所有碰撞检测
 	Sphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); //设置其与Pawn类型物体产生重叠事件
 
-    //设置移动终点
+    //自动移动组件
 	MoveToComponent = CreateDefaultSubobject<USceneComponent>("MoveToComponent");
 	MoveToComponent->SetupAttachment(GetRootComponent());
 }
@@ -74,7 +73,7 @@ void ACheckPoint::SetMoveToLocation_Implementation(FVector& OutDestination)
 
 void ACheckPoint::HighlightActor_Implementation()
 {
-	if (bReached)
+	if (!bReached)
 	{
 		CheckpointMesh->SetRenderCustomDepth(true);
 	}

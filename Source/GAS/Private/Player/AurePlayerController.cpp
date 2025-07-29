@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AbilitySystem/AureAbilitySystemComponent.h"
 #include "Actor/MagicCircle.h"
 #include "Components/DecalComponent.h"
@@ -247,7 +248,6 @@ void AAurePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 		}
 		
 		bAutoRunning = false;
-		FollowTime = 0.f; //重置统计的时间
 	}
 	//调用ASC内创建的键位按下事件
 	if(GetASC()) GetASC()->AbilityInputTagPressed(InputTag);
@@ -289,6 +289,17 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	    // 检查FollowTime是否小于短按阈值且ControlledPawn存在
 	    if(FollowTime <= ShortPressThreshold && ControlledPawn)
 	    {
+		    // 检查当前Actor是否有效且实现了高亮接口，如果满足条件则调用接口方法设置移动目标位置
+		    if (IsValid(ThisActor) && ThisActor->Implements<UHighlightInterface>())
+		    {
+			    IHighlightInterface::Execute_SetMoveToLocation(ThisActor, CachedDestination);
+		    }
+		    else if (GetASC() && !GetASC()->HasMatchingGameplayTag(FAureGameplayTags::Get().Player_Block_InputPressed))
+		    {
+		    	//触发点击时，播放点击特效
+		    	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
+		    }
+	    	
 	        // 使用UNavigationSystemV1找到从当前Pawn位置到缓存目标位置的路径
 	        if(UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(
 	        	this, ControlledPawn->GetActorLocation(), CachedDestination))
@@ -311,6 +322,10 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	            }
 	        }
 	    }
+		//重置统计的时间
+		FollowTime = 0.f;
+		//将目标锁定状态设置为非目标
+		TargetingStatus = ETargetingStatus::NotTargeting;
 	}
 }
 
@@ -423,5 +438,4 @@ void AAurePlayerController::ShowDamageNumber_Implementation(float DamageAmount, 
 	    // 设置伤害文本内容
 	    DamageText->SetDamageText(DamageAmount, IsBlockedHit, IsCriticalHit); 
 	}
-	
 }

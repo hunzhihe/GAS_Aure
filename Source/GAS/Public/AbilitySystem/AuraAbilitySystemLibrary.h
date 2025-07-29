@@ -9,6 +9,7 @@
 #include "UI/WidgetController/SpellMenuWidgetController.h"
 #include "AuraAbilitySystemLibrary.generated.h"
 
+class ULocalScreenSaveGame;
 class UCharacterClassInfo;
 class UAbilitySystemComponent;
 enum class ECharacterClass : uint8;
@@ -323,6 +324,7 @@ public:
 	 * @note 这个函数主要用于从存档里读取角色信息，并初始化
 	 */
 	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|CharacterClassDefaults", meta=(DefaultToSelf = "WorldContextObject"))
-	static void InitializeDefaultAttributesFromSaveData(const UObject* WorldContextObject, UAbilitySystemComponent* ASC, ULocalScreenSaveGame* SaveGame);
+	static void InitializeDefaultAttributesFromSaveData(const UObject* WorldContextObject, UAbilitySystemComponent* ASC,
+		ULocalScreenSaveGame* SaveGame);
 	
 };

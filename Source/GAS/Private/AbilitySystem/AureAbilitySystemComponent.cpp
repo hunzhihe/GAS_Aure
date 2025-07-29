@@ -100,7 +100,7 @@ void UAureAbilitySystemComponent::AddCharacterPassiveAbilities(
 	for(const TSubclassOf<UGameplayAbility> AbilityClass : StartupPassiveAbilities)
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
-		
+		AbilitySpec.GetDynamicSpecSourceTags().AddTag(FAureGameplayTags::Get().Abilities_Status_Equipped);
 		GiveAbilityAndActivateOnce(AbilitySpec); //应用技能并激活一次
 	}
 }

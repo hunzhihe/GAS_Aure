@@ -31,7 +31,8 @@ public:
 	virtual void HighlightActor_Implementation() override;
 	    // 实现取消高亮显示Actor的功能
 	virtual void UnHighlightActor_Implementation() override;
-	
+	    // 修改移动终点
+	virtual void SetMoveToLocation_Implementation(FVector& OutDestination) override;
 	/*IHighlightInterface 结束*/
 	
 	

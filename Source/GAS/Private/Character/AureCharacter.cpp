@@ -50,8 +50,7 @@ AAureCharacter::AAureCharacter()
 	LevelUpNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("LevelUpNiagaraComponent");
 	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent()); 
 	LevelUpNiagaraComponent->bAutoActivate = false;
-
-
+	
 	
 }
 
@@ -227,10 +226,8 @@ void AAureCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
 
         SaveGameData->bFirstTimeLoadIn = false;
 
-		if (!HasAuthority())
-		{
-			return;
-		}
+		if (!HasAuthority()) return;
+		
 
 		UAureAbilitySystemComponent* AureASC = Cast<UAureAbilitySystemComponent>(GetAbilitySystemComponent());
 		//将存档内的技能数组清空

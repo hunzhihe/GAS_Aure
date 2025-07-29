@@ -318,6 +318,7 @@ void AAureBaseCharacter::AddCharacterAbilities()
 	
 	// 为角色添加初始技能
 	AureAbilitySystemComponent->AddCharacterAbilities(StartupAbilities);
+	// 为角色添加初始被动技能(非角色后天学习的被动技能，而是类如接受经验值，自身眩晕等这种)
 	AureAbilitySystemComponent->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 }
 

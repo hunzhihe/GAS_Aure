@@ -8,6 +8,7 @@
 #include "Input/InputConfig.h"
 #include "AurePlayerController.generated.h"
 
+class UNiagaraSystem;
 class AMagicCircle;
 class UDamageTextComponent;
 class USplineComponent;
@@ -131,6 +132,10 @@ private:
 	// 存储自动寻路路径的曲线
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline;
+
+	//移动时点击地面特效
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UNiagaraSystem> ClickNiagaraSystem;
 
 	void AutoRun();
 

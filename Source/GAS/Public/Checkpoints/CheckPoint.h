@@ -36,8 +36,6 @@ public:
 	
 	/*   End Save Interface   */
 
-	
-
 protected:
 
 	virtual void BeginPlay() override;
@@ -52,7 +50,8 @@ protected:
 	 * @param SweepResult 如果位置发生过瞬移（直接设置到某处），两个位置中间的内容会记录到此对象内
 	 */
 	UFUNCTION()
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	/* Highlight Interface */
 	virtual void SetMoveToLocation_Implementation(FVector& OutDestination) override;
@@ -60,10 +59,12 @@ protected:
 	virtual void UnHighlightActor_Implementation() override;
 	/* Highlight Interface */
 
+
+	//移动到检查点的位置
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USceneComponent> MoveToComponent;
 
-	
+	//自定义深度值
 	UPROPERTY(EditDefaultsOnly)
 	int32 CustomDepthStencilOverride = CUSTOM_DEPTH_TAN;
 	
@@ -84,7 +85,7 @@ protected:
 
 	//检查点模型使用的碰撞体
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent> Sphere;
+	TObjectPtr<USphereComponent> Sphere; 
 
 	//检查点模型使用的材质
 	UPROPERTY(EditDefaultsOnly)
