@@ -320,6 +320,15 @@ void FAureGameplayTags::InitializeNativeGameplayTags()
 			FName("Abilities.Passive.HaloOfProtection"),
 			FString("Halo Of Protection")
 			);
+	GameplayTags.Abilities_Passive_Stunned = UGameplayTagsManager::Get().AddNativeGameplayTag(
+			FName("Abilities.Passive.Stunned"),
+			FString("Stunned")
+			);
+	GameplayTags.Abilities_StartupPassive_ListenForEvent = UGameplayTagsManager::Get().AddNativeGameplayTag(
+			FName("Abilities.StartupPassive.ListenForEvent"),
+			FString("Listen For Event")
+			);
+	
 	
 
 	GameplayTags.Abilities_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
@@ -370,7 +379,18 @@ void FAureGameplayTags::InitializeNativeGameplayTags()
 		FName("Cooldown.Fire.FireBolt"),
 		FString("FireBolt Cooldown Tag")
 		);
-
+	GameplayTags.Cooldown_Fire_FireBlast = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Cooldown.Fire.FireBlast"),
+		FString("FireBlast Cooldown Tag")
+		);
+	GameplayTags.Cooldown_Lightning_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Cooldown.Lightning.Electrocute"),
+		FString("Electrocute Cooldown Tag")
+		);
+	GameplayTags.Cooldown_Arcane_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	    FName("Cooldown.Arcane.ArcaneShards"),
+			FString("ArcaneShards Cooldown Tag")
+			);
 	/*
 	 * Combat Sockets
 	 */
@@ -418,7 +438,23 @@ void FAureGameplayTags::InitializeNativeGameplayTags()
 		FName("Montage.Attack.4"),
 		FString("Attack 4")
 		);
+	/*
+	  * Event.Montage Tags
+	  */
+	GameplayTags.Event_Montage_FireBlast = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.FireBlast"),
+		FString ("FireBlast Montage Tag"));
+	GameplayTags.Event_Montage_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.FireBolt"),
+		FString ("FireBolt Montage Tag"));
+	GameplayTags.Event_Montage_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.Electrocute"),
+		FString ("Electrocute Montage Tag"));
+	GameplayTags.Event_Montage_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.ArcaneShards"),
+		FString ("ArcaneShards Montage Tag"));
 
+	
 	/*
 	 * Player Tags
 	 */
@@ -451,7 +487,23 @@ void FAureGameplayTags::InitializeNativeGameplayTags()
 		FName("GameplayCue.FireBlast"),
 		FString("FireBlast GameplayCue Tag")
 		);
-
+	GameplayTags.GameplayCue_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("GameplayCue.ArcaneShards"),
+		FString( "ArcaneShards GameplayCue Tag"));
+	GameplayTags.GameplayCue_ShockLoop = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("GameplayCue.ShockLoop"),
+		FString( "ShockLoop GameplayCue Tag"));
+	GameplayTags.GameplayCue_ShockBrust = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("GameplayCue.ShockBrust"),
+		FString( "ShockBrust GameplayCue Tag"));
+	GameplayTags.GameplayCue_HitEffect = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("GameplayCue.HitEffect"),
+		FString ("HitEffect GameplayCue Tag"));
+	GameplayTags.GameplayCue_ImpactSound = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("GameplayCue.ImpactSound"),
+		FString ( "ImpactSound GameplayCue Tag")
+	);
+ 
 	/*
 	 * Message
 	 */

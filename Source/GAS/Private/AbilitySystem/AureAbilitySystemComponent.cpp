@@ -170,7 +170,7 @@ void UAureAbilitySystemComponent::ForEachAbility(const FForEachAbility& Delegate
 	FScopedAbilityListLock ActiveScopeLock(*this);
 	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
-		//运行绑定在技能实例上的委托，如果失败返回false
+		//运行绑定在技能实例上的委托，如果实例存在,则运行委托,否则返回false
 		if (!Delegate.ExecuteIfBound(AbilitySpec))
 		{
 			UE_LOG(LogAure,Error,TEXT("在函数[%hs]运行委托失败"),__FUNCTION__)

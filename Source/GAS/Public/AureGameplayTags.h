@@ -89,8 +89,15 @@ public:
 	FGameplayTag Abilities_Passive_HaloOfProtection;
 	FGameplayTag Abilities_Passive_LifeSiphon;
 	FGameplayTag Abilities_Passive_ManaSiphon;
+	FGameplayTag Abilities_Passive_Stunned;
 
+	FGameplayTag Abilities_StartupPassive_ListenForEvent;
+	
+	
 	FGameplayTag Cooldown_Fire_FireBolt;
+	FGameplayTag Cooldown_Fire_FireBlast;
+	FGameplayTag Cooldown_Lightning_Electrocute;
+	FGameplayTag Cooldown_Arcane_ArcaneShards;
 
 	FGameplayTag CombatSocket_Weapon;
 	FGameplayTag CombatSocket_RightHand;
@@ -101,6 +108,11 @@ public:
 	FGameplayTag Montage_Attack_2;
 	FGameplayTag Montage_Attack_3;
 	FGameplayTag Montage_Attack_4;
+
+	FGameplayTag Event_Montage_FireBolt;
+	FGameplayTag Event_Montage_FireBlast;
+	FGameplayTag Event_Montage_Electrocute;
+	FGameplayTag Event_Montage_ArcaneShards;
 	
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
@@ -114,6 +126,11 @@ public:
 	FGameplayTag Player_Block_CursorTrace;
 
 	FGameplayTag GameplayCue_FireBlast;
+	FGameplayTag GameplayCue_ArcaneShards;
+	FGameplayTag GameplayCue_ShockLoop;
+	FGameplayTag GameplayCue_ShockBrust;
+	FGameplayTag GameplayCue_HitEffect;
+	FGameplayTag GameplayCue_ImpactSound;
 
 	FGameplayTag Message_HealthCrystal;
 	FGameplayTag Message_ManaCrystal;
