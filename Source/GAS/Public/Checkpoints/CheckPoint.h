@@ -31,11 +31,16 @@ public:
 
 
 	//当前检查点是否已经被激活，设置SaveGame表示该值将会被存储到存档文件中
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadWrite, SaveGame)
 	bool bReached = false;
 	
 	/*   End Save Interface   */
 
+
+	//是否绑定叠加事件回调
+	UPROPERTY(EditAnywhere)
+	bool bBindOverlapCallback = true;
+	
 protected:
 
 	virtual void BeginPlay() override;
@@ -77,6 +82,7 @@ protected:
 
 	
 	//当玩家角色和检测点产生碰撞后，检查点被激活触发此函数
+	UFUNCTION(BlueprintCallable)
 	void HandleGlowEffects();
 	
 	//检查点显示的模型

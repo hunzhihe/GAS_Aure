@@ -114,6 +114,10 @@ public:
 	UPROPERTY()
 	FString MapName = FString();
 
+	//地图资源名称
+	UPROPERTY()
+	FString MapAssetName = FString("Default Map Asset Name");
+
 	//存储玩家关卡出生位置的标签
 	UPROPERTY()
 	FName PlayerStartTag;

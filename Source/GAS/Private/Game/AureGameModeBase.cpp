@@ -140,7 +140,7 @@ void AAureGameModeBase::SaveInGameProgressData(ULocalScreenSaveGame* SaveObject)
 	
 }
 
-void AAureGameModeBase::SaveWorldState(UWorld* World) const
+void AAureGameModeBase::SaveWorldState(UWorld* World,const FString& DestinationMapAssetName) const
 {
 	//获取关卡名称
 	FString WorldName = World->GetMapName();
@@ -153,6 +153,12 @@ void AAureGameModeBase::SaveWorldState(UWorld* World) const
 	//获取存档
 	if (ULocalScreenSaveGame* SaveGameData = GetSaveSlotData(AureGameInstance->LoadSlotName, AureGameInstance->LoadSlotIndex))
 	{
+        //修改存档地图资源名称和地图名称
+        if (DestinationMapAssetName != FString(""))
+        {
+	        SaveGameData->MapAssetName = DestinationMapAssetName;
+        	SaveGameData->MapName = GetMapNameFromMapAssetName(DestinationMapAssetName);
+        }
 		//如果存档不包含对应关卡内容，将创建一个对应的数据结构存储
 		if (!SaveGameData->HasMap(WorldName))
 		{
@@ -262,6 +268,25 @@ void AAureGameModeBase::LoadWorldState(UWorld* World) const
         }
 		
 	}
+}
+
+FString AAureGameModeBase::GetMapNameFromMapAssetName(const FString& MapAssetName) const
+{
+	/**
+	 * 根据地图资产名称查找对应的地图键值
+	 * @param Maps 包含地图映射关系的容器
+	 * @param MapAssetName 要查找的地图资产名称
+	 * @return 返回匹配的地图键值，如果未找到则返回空字符串
+	 */
+		for (auto& Map : Maps)
+		{
+			// 查找与指定资产名称匹配的地图项
+			if (Map.Value.ToSoftObjectPath().GetAssetName() == MapAssetName)
+			{
+				return Map.Key;
+			}
+		}
+		return FString();
 }
 
 void AAureGameModeBase::BeginPlay()

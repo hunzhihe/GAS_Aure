@@ -10,6 +10,7 @@
 #include "AbilitySystem/AureAttributeSet.h"
 #include "AbilitySystem/Data/LevelUpInfo.h"
 #include "Camera/CameraComponent.h"
+#include "Game/AureGameInstance.h"
 #include "Game/AureGameModeBase.h"
 #include "Game/LocalScreenSaveGame.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -197,6 +198,10 @@ void AAureCharacter::HideMagicCircle_Implementation() const
 
 void AAureCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
 {
+	//获取到游戏实例
+	UAureGameInstance* AureGameInstance = Cast<UAureGameInstance>(GetGameInstance());
+	check(AureGameInstance);
+	
 	if(const AAureGameModeBase* GameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
 	{
 		//获取存档
@@ -207,6 +212,8 @@ void AAureCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
 		SaveGameData->PlayerStartTag = CheckpointTag;
 		//将检查点添加到已激活数组，（并去重）
 		SaveGameData->ActivatedPlayerStartTags.AddUnique(CheckpointTag);
+		//修改游戏实例设置的玩家出生标签
+		AureGameInstance->PlayerStartTag = CheckpointTag;
 
 		//修改玩家相关
 		if (const AAurePlayerState* AurePlayerState = GetPlayerState<AAurePlayerState>())

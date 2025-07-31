@@ -88,10 +88,14 @@ public:
 	void SaveInGameProgressData(ULocalScreenSaveGame* SaveObject) const;
 	
 
-	//保存关卡中的状态到当前存档中
-	void SaveWorldState(UWorld* World) const;
+	//保存关卡中的状态到当前存档中 World当前所处事件 DestinationMapAssetName 目标地图资源名称
+	void SaveWorldState(UWorld* World,const FString& DestinationMapAssetName = FString("")) const;
 	//从存档中加载当前关卡的状态
 	void LoadWorldState(UWorld* World) const;
+
+    //根据地图名称获取地图资源路径
+	FString GetMapNameFromMapAssetName(const FString& MapAssetName) const;
+
 	
 protected:
 	virtual void BeginPlay() override;
