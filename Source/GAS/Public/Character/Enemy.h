@@ -57,8 +57,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	bool bHitReacting = false;
 
-	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
-	
+	//死亡后角色存在时间
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
+	float LifeSpan = 5.f;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<AActor> CombatTarget;
@@ -69,16 +70,15 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedSignature OnMaxHealthChanged;
 
-	
+	void SetLevel(int32 InLevel) { Level = InLevel; }
+	void SetCharacterClass( ECharacterClass InCharacterClass) { CharacterClass = InCharacterClass; }
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;
 	virtual void InitializeDefaultAttributes() const override;
-
-	//死亡后角色存在时间
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
-	float LifeSpan = 5.f;
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
+	
 
 	//血条控件
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Widget")

@@ -7,6 +7,7 @@
 #include "Checkpoints/CheckPoint.h"
 #include "Game/AureGameInstance.h"
 #include "Game/LocalScreenSaveGame.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "GAS/AureLogChannels.h"
 #include "Kismet/GameplayStatics.h"
@@ -54,8 +55,15 @@ void AAureGameModeBase::TravelToMap(const UMVVM_LoadSlot* Slot)
 	UGameplayStatics::OpenLevelBySoftObjectPtr(Slot, Maps.FindChecked(Slot->GetMapName()));
 }
 
-void AAureGameModeBase::PlayerDied(ACharacter* DeadCharacter)
+void AAureGameModeBase::PlayerDied(const ACharacter* DeadCharacter) const
 {
+	//获取存档数据
+	const ULocalScreenSaveGame* SaveGame = RetrieveInGameSaveData();
+	if (!IsValid(SaveGame)) return;
+
+	//通过地图命名打开地图
+	UGameplayStatics::OpenLevel(DeadCharacter, FName(SaveGame->MapAssetName));
+	
 }
 
 void AAureGameModeBase::SaveSlotData(const UMVVM_LoadSlot* LoadSlot, int32 SlotIndex) const

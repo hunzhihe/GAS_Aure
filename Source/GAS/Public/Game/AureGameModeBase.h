@@ -49,8 +49,12 @@ public:
 
 	//跳转地图
 	void TravelToMap(const UMVVM_LoadSlot* Slot);
-	
-	void PlayerDied(ACharacter* DeadCharacter);
+
+	/**
+	 * 玩家死亡
+	 * @param DeadCharacter 死亡玩家
+	 */
+	void PlayerDied(const ACharacter* DeadCharacter) const;
 
 	/**
     * 创建新存档

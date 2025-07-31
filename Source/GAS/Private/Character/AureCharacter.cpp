@@ -92,6 +92,22 @@ int32 AAureCharacter::GetPlayerLevel_Implementation()
 void AAureCharacter::Die(const FVector& DeathImpulse)
 {
 	Super::Die(DeathImpulse);
+
+	//创建一个委托，用于绑定委托回调
+	FTimerDelegate DeathTimerDelegate;
+	DeathTimerDelegate.BindLambda([this]()
+	{
+		if (const AAureGameModeBase* AureGameMode = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		{
+			AureGameMode->PlayerDied(this);
+		}
+	}
+		);
+
+	//通过定时器触发对应的委托广播
+	GetWorldTimerManager().SetTimer(DeathTimer, DeathTimerDelegate, DeathTime, false);
+	//防止相机在玩家角色死亡后跟随移动,将相机固定到世界坐标位置
+	TopDownCameraComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 }
 
 void AAureCharacter::AddToXP_Implementation(int32 InXP)
