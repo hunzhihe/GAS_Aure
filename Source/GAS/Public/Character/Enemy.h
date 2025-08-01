@@ -73,6 +73,10 @@ public:
 	void SetLevel(int32 InLevel) { Level = InLevel; }
 	void SetCharacterClass( ECharacterClass InCharacterClass) { CharacterClass = InCharacterClass; }
 
+	//生成战利品
+	UFUNCTION(BlueprintImplementableEvent)
+	void SpawnLoot();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;

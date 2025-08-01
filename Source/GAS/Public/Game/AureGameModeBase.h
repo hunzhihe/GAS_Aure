@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "AureGameModeBase.generated.h"
 
+class ULootTiers;
 class UMVVM_LoadSlot;
 class ULocalScreenSaveGame;
 class USaveGame;
@@ -25,6 +26,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Ability Info")
 	TObjectPtr<UAbilityInfo> AbilityInfo;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Loot Tiers")
+	TObjectPtr<ULootTiers> LootTiers;
 
 	//初始地图名称
 	UPROPERTY(EditDefaultsOnly)

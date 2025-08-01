@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/AureAttributeSet.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AAureEffectActor::AAureEffectActor()
@@ -20,7 +21,25 @@ AAureEffectActor::AAureEffectActor()
 void AAureEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//设置初始位置
+	InitialLocation = GetActorLocation();
+	CalculatedLocation = InitialLocation;
+	CalculatedRotation = GetActorRotation();
 	
+}
+
+void AAureEffectActor::StartSinusoidalMovement()
+{
+	bSinusoidalMovement = true;
+	InitialLocation = GetActorLocation();
+	CalculatedLocation = InitialLocation;
+}
+
+void AAureEffectActor::StartRotation()
+{
+	bRotates = true;
+	CalculatedRotation = GetActorRotation();
 }
 
 void AAureEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
@@ -140,10 +159,30 @@ void AAureEffectActor::OnEndOverlap(AActor* TargetActor)
 	}
 }
 
-// Called every frame
+void AAureEffectActor::ItemMovement(float DeltaTime)
+{
+	//更新转向
+	if (bRotates)
+	{
+		const FRotator DeltaRotation(0.f,DeltaTime*RotationRate,0.f);
+		CalculatedRotation = UKismetMathLibrary::ComposeRotators(CalculatedRotation,DeltaRotation);
+	}
+	//更新位置
+	if (bSinusoidalMovement)
+	{
+		const float Sine = SineAmplitude * FMath::Sin(RunningTime * SinePeriodConstant * 6.28318f);
+		CalculatedLocation = InitialLocation + FVector(0.f,0.f,Sine);
+	}
+}
+
+
 void AAureEffectActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//更新当前Actor的存在时间
+	RunningTime += DeltaTime;
+	ItemMovement(DeltaTime);
 }
 
 

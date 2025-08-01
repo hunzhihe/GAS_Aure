@@ -101,6 +101,9 @@ void AAureEnemy::Die(const FVector& DeathImpulse)
 	}
 	SetLifeSpan(LifeSpan);
 	
+    //掉落物生成
+	SpawnLoot();
+	
 	Super::Die(DeathImpulse);
 }
 

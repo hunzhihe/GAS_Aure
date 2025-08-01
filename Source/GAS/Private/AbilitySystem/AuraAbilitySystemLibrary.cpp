@@ -674,6 +674,15 @@ void UAuraAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(const UO
 	}
 }
 
+ULootTiers* UAuraAbilitySystemLibrary::GetLootTiers(const UObject* WorldContextObject)
+{
+	//获取当前关卡的GM实例
+	const AAureGameModeBase* GM = Cast<AAureGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+
+	//返回敌人战利品配置，需要设置到GameMode上
+	return GM->LootTiers;
+}
+
 bool UAuraAbilitySystemLibrary::IsSuccessfulDeBuff(const FGameplayEffectContextHandle& EffectContextHandle)
 {
 	// 将EffectContextHandle转换为FAureGameplayEffectContext类型

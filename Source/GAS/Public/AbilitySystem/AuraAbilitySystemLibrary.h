@@ -9,6 +9,7 @@
 #include "UI/WidgetController/SpellMenuWidgetController.h"
 #include "AuraAbilitySystemLibrary.generated.h"
 
+class ULootTiers;
 class ULocalScreenSaveGame;
 class UCharacterClassInfo;
 class UAbilitySystemComponent;
@@ -326,5 +327,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|CharacterClassDefaults", meta=(DefaultToSelf = "WorldContextObject"))
 	static void InitializeDefaultAttributesFromSaveData(const UObject* WorldContextObject, UAbilitySystemComponent* ASC,
 		ULocalScreenSaveGame* SaveGame);
+
+
+	/*
+	 * 获取生成的战利品数据资产，此数据被配置到GM上
+	 * @param WorldContextObject 一个世界场景的对象，用于获取当前所在的世界
+	 * 
+	 */
+	UFUNCTION(BlueprintCallable, Category="RPGAbilitySystemLibrary|CharacterClassDefaults", meta=(DefaultToSelf = "WorldContextObject"))
+	static ULootTiers* GetLootTiers(const UObject* WorldContextObject);
 	
 };
